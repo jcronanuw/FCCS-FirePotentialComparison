@@ -1,0 +1,34 @@
+# =============================================================================,,,
+# Use this file to customize FCCS output.,,,
+#,,,
+# This file contains 3 columns -- FCCS name, Your name, conversion for metric,
+# ,,,
+# To design a new report, copy this file to a new file named appropriatly. Next,,
+# delete the lines you don't want (or commnent them out with '#'). Customize the,,,
+# second column as you want - this will be the name for the column in your report.,,,
+# ,,,
+# Conversion methods are:,,,
+#   - to_no_convert,,,
+#   - to_mgha,,,
+#   - to_meter,,,
+#   - to_meter_per_min,,,
+#   - to_centimeter,,,
+#   - to_kJ_per_m2,,,
+# =============================================================================,,,
+Filename,Filename,to_no_convert,Fuelbed filename
+Fuelbed_number,FB_ID,to_no_convert,Fuelbed ID
+Fuelbed_name,FB_name,to_no_convert,Fuelbed name
+FCC_Code,FCCS_Code,to_no_convert,"3-digit FCCS potential code representing surface, crown fire, and available fuel summary potentials"
+Surface_fire_potential,SFP,to_no_convert,Surface fire behavior summary potential (0-9)
+Reaction_potential,Surface_Reaction,to_no_convert,Reaction potential (0-9)
+Spread_potential,Surface_Spread,to_no_convert,Spread potential (0-9)
+Flamelength_potential,Surface_Flamelength,to_no_convert,Flame length potential (0-9)
+Crown_fire_potential,CFP,to_no_convert,Crown fire summary potential (0-9)
+Crown_initiation_potential,Crown_Initiation,to_no_convert,Crown fire initiation potential (0-9)
+Crown-crown_trans_potential,Crown_Transmissivity,to_no_convert,Crown-to-crown transmissivity potential (0-9)
+Crownfire_spread_potential,Crown_Spread,to_no_convert,Crown fire spreading potential (0-9)
+Available_fuel_potential,AFP,to_no_convert,Available fuel summary potential (0-9)
+Flame_available_potential,Available_Flame,to_no_convert,Flame-available fuel potential (scaled by a factor of 10)
+Smolder_available_potential,Available_Smolder,to_no_convert,Smolder-available fuel potential (scaled by a factor of 10)
+Residual_smolder_potential,Available_Residual,to_no_convert,Residual smolder-available fuel potentail (scaled by a factor of 10)
+Version,Version,to_no_convert,FCCS version number

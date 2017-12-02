@@ -1,0 +1,108 @@
+# =============================================================================,,,
+# Use this file to customize FCCS output.,,,
+#,,,
+# This file contains 3 columns -- FCCS name, Your name, conversion for metric,
+# ,,,
+# To design a new report, copy this file to a new file named appropriatly. Next,,
+# delete the lines you don't want (or commnent them out with '#'). Customize the,,,
+# second column as you want - this will be the name for the column in your report.,,,
+# ,,,
+# Conversion methods are:,,,
+#   - to_no_convert,,,
+#   - to_mgha,,,
+#   - to_meter,,,
+#   - to_meter_per_min,,,
+#   - to_centimeter,,,
+#   - to_kJ_per_m2,,,
+# =============================================================================,,,
+Filename,Filename,to_no_convert,Fuelbed filename
+Fuelbed_number,Fuelbed_number,to_no_convert,Fuelbed ID
+Fuelbed_name,Fuelbed_name,to_no_convert,Fuelbed name
+FCC_Code,FCC_Code,to_no_convert,"3-digit FCCS potential code representing surface, crown fire, and available fuel summary potentials"
+Surface_fire_potential,Surface_fire_potential,to_no_convert,Surface fire behavior summary potential (0-9)
+Reaction_potential,Reaction_potential,to_no_convert,Reaction potential (0-9)
+Spread_potential,Spread_potential,to_no_convert,Spread potential (0-9)
+Flamelength_potential,Flamelength_potential,to_no_convert,Flame length potential (0-9)
+Crown_fire_potential,Crown_fire_potential,to_no_convert,Crown fire summary potential (0-9)
+Crown_initiation_potential,Crown_initiation_potential,to_no_convert,Crown fire initiation potential (0-9)
+Crown-crown_trans_potential,Crown-crown_trans_potential,to_no_convert,Crown-to-crown transmissivity potential (0-9)
+Crownfire_spread_potential,Crownfire_spread_potential,to_no_convert,Crown fire spreading potential (0-9)
+Available_fuel_potential,Available_fuel_potential,to_no_convert,Available fuel summary potential (0-9)
+Flame_available_potential,Flame_available_potential,to_no_convert,Flame-available fuel potential (scaled by a factor of 10)
+Smolder_available_potential,Smolder_available_potential,to_no_convert,Smolder-available fuel potential (scaled by a factor of 10)
+Residual_smolder_potential,Residual_smolder_potential,to_no_convert,Residual smolder-available fuel potentail (scaled by a factor of 10)
+Benchmark_ROS,Benchmark_ROS,to_meter_per_min,Rate of spread under benchmark environmental inputs
+Benchmark_FL,Benchmark_FL,to_meter,Flame length under benchmark environmental inptus
+Benchmark_RI,Benchmark_RI,to_kJ_per_m2,Reaction intensity under benchmark environmental inputs
+Benchmark_RI_Shrub,Benchmark_RI_Shrub,to_kJ_per_m2,"Reaction intensity, shrub stratum under benchmark environmental inputs"
+Benchmark_RI_Herb,Benchmark_RI_Herb,to_kJ_per_m2,"Reaction intensity, herb stratum under benchmark environmental inputs"
+Benchmark_RI_Wood,Benchmark_RI_Wood,to_kJ_per_m2,"Reaction intensity, wood stratum under benchmark environmental inputs"
+Benchmark_RI_LLM,Benchmark_RI_LLM,to_kJ_per_m2,"Reaction intensity, litter-lichen-moss stratum under benchmark environmental inputs"
+Crosswalk13,Crosswalk13,to_no_convert,Suggested crosswalk to one of the 13 original fire behavior prediction system fuel models under benchmark environmental inputs
+ROS%13,ROS%13,to_no_convert,Percent difference of predicted rate of spread in FCCS versus for suggested fuel model under benchmark environmental inputs
+FL%13,FL%13,to_no_convert,Percent difference of predicted flame length in FCCS versus for suggested fuel model under benchmark environmental inputs
+Crosswalk40,Crosswalk40,to_no_convert,Suggested crosswalk to one of the 40 standard fuel models under benchmark environmental inputs
+ROS%40,ROS%40,to_no_convert,Percent difference of predicted rate of spread in FCCS versus for suggested fuel model under benchmark environmental inputs
+FL%40,FL%40,to_no_convert,Percent difference of predicted flame length in FCCS versus for suggested fuel model under benchmark environmental inputs
+Custom_ROS,Custom_ROS,to_meter_per_min,Rate of spread under user-specified environmental inputs
+Custom_FL,Custom_FL,to_meter,Flame length under user-specified environmental inputs
+Custom_RI,Custom_RI,to_kJ_per_m2,Reaction intensity under user-specified environmental inputs
+Custom_RI_Shrub,Custom_RI_Shrub,to_kJ_per_m2,"Reaction intensity, shrub stratum under user-specified environmental inputs"
+Custom_RI_Herb,Custom_RI_Herb,to_kJ_per_m2,"Reaction intensity, herb stratum under user-specified environmental inputs"
+Custom_RI_Wood,Custom_RI_Wood,to_kJ_per_m2,"Reaction intensity, wood stratum under user-specified environmental inputs"
+Custom_RI_LLM,Custom_RI_LLM,to_kJ_per_m2,"Reaction intensity, litter-lichen-moss stratum under user-specified environmental inputs"
+Custom_Crosswalk13,Custom_Crosswalk13,to_no_convert,Suggested crosswalk to one of the 13 original fire behavior prediction system fuel models under user-specified environmental inputs
+Custom_ROS%13,Custom_ROS%13,to_no_convert,Percent difference of predicted rate of spread in FCCS versus for suggested fuel model under user-specified environmental inputs
+Custom_FL%13,Custom_FL%13,to_no_convert,Percent difference of predicted flame length in FCCS versus for suggested fuel model under user-specified environmental inputs
+Custom_Crosswalk40,Custom_Crosswalk40,to_no_convert,Suggested crosswalk to one of the 40 standard fuel models  under user-specified environmental inputs
+Custom_ROS%40,Custom_ROS%40,to_no_convert,Percent difference of predicted rate of spread in FCCS versus for suggested fuel model under user-specified environmental inputs
+Custom_FL%40,Custom_FL%40,to_no_convert,Percent difference of predicted flame length in FCCS versus for suggested fuel model
+Tree_over_crown_load,Tree_over_crown_load,to_mgha,Loading of overstory tree crowns
+Tree_mid_crown_load,Tree_mid_crown_load,to_mgha,Loading of midstory tree crowns
+Tree_under_crown_load,Tree_under_crown_load,to_mgha,Loading of understory tree crowns
+Tree_aboveground_load,Tree_aboveground_load,to_mgha,"Total aboveground biomass of trees calculated from allometric equations based on tree height, dbh, and density"
+Snag_class1_foliage_load,Snag_class1_foliage_load,to_mgha,Loading of recently dead tree crowns (class 1 snags with foliage)
+Snag_class1_wood_load,Snag_class1_wood_load,to_mgha,Bole loading of class 1 snags with foliage
+Snag_class1_other_load,Snag_class1_other_load,to_mgha,Bole loading of class 1 snags without foliage
+Snag_class2_load,Snag_class2_load,to_mgha,Bole loading of class 2 snags
+Snag_class3_load,Snag_class3_load,to_mgha,Bole loading of class 3 snags
+Ladderfuels_load,Ladderfuels_load,to_mgha,Loading of ladder fuels 
+Shrub_primary_load,Shrub_primary_load,to_mgha,Loading of shrub primary layer
+Shrub_primary_crown_load,Shrub_primary_crown_load,to_mgha,Crown loading of shrub primary layer
+Shrub_secondary_load,Shrub_secondary_load,to_mgha,Loading of shrub secondary layer
+Shrub_secondary_crown_load,Shrub_secondary_crown_load,to_mgha,Crown loading of shrub secondary layer
+Shrub_needleDrape_load,Shrub_needleDrape_load,to_mgha,Loading of needle drape on shrubs
+Herb_primary_load,Herb_primary_load,to_mgha,Loading of primary herb layer
+Herb_secondary_load,Herb_secondary_load,to_mgha,Loading of secondary herb layer
+Woody_sound_1hr_load,Woody_sound_1hr_load,to_mgha,Loading of 1-hr sound wood
+Woody_sound_10hr_load,Woody_sound_10hr_load,to_mgha,Loading of 10-hr sound wood
+Woody_sound_100hr_load,Woody_sound_100hr_load,to_mgha,Loading of 100-hr sound wood
+Woody_sound_1000hr_load,Woody_sound_1000hr_load,to_mgha,Loading of 1000-hr sound wood
+Woody_sound_10khr_load,Woody_sound_10khr_load,to_mgha,"Loading of 10,000-hr sound wood"
+Woody_sound_GT10k_load,Woody_sound_GT10k_load,to_mgha,"Loading of >10,000-hr sound wood"
+Woody_rotten_1000hr_load,Woody_rotten_1000hr_load,to_mgha,Loading of 1000-hr rotten wood
+Woody_rotten_10k_load,Woody_rotten_10k_load,to_mgha,"Loading of 10,000-hr rotten wood"
+Woody_rotten_GT10k_load,Woody_rotten_GT10k_load,to_mgha,"Loading of >10,000-hr rotten wood"
+Woody_pile_load,Woody_pile_load,to_mgha,Loading of pile wood
+Woody_stumps_sound_load,Woody_stumps_sound_load,to_mgha,Loading of sound stumps
+Woody_stumps_rotten_load,Woody_stumps_rotten_load,to_mgha,Loading of rotten stumps
+Woody_stumps_lightered_load,Woody_stumps_lightered_load,to_mgha,Loading of lightered-pitchy stumps
+LLM_litter_load,LLM_litter_load,to_mgha,Loading of litter layer
+LLM_lichen_load,LLM_lichen_load,to_mgha,Loading of ground lichen layer
+LLM_moss_load,LLM_moss_load,to_mgha,Loading of moss layer
+Ground_upperduff_load,Ground_upperduff_load,to_mgha,Loading of upper duff layer
+Ground_lowerduff_load,Ground_lowerduff_load,to_mgha,Loading of lower duff layer
+Ground_basalaccum_load,Ground_basalaccum_load,to_mgha,Loading of basal accumulations
+Ground_squirrelmid_load,Ground_squirrelmid_load,to_mgha,Loading of squirrel middens
+Depth_shrub,Depth_shrub,to_meter,Depth of shrub stratum
+Depth_herb,Depth_herb,to_meter,Depth of herb stratum
+Depth_woody,Depth_woody,to_meter,Depth of fine wood (< 1000-hr timelag classes)
+Depth_LLM,Depth_LLM,to_meter,Depth of litter-lichen-moss stratum
+Depth_surface_fuels,Depth_surface_fuels,to_meter,Weighted-average depth of surface fuels
+PercentCover_shrub,PercentCover_shrub,to_no_convert,Percent cover of shrub stratum
+PercentCover_herb,PercentCover_herb,to_no_convert,Percent cover of herb stratum
+PercentCover_woody,PercentCover_woody,to_no_convert,Percent cover of fine wood (< 1000-hr timelag class)
+PercentCover_LLM,PercentCover_LLM,to_no_convert,Percent cover of litter-lichen-moss stratum
+Total_carbon_load,Total_carbon_load,to_mgha,bole-included carbon
+Total_aboveground_biomass,Total_aboveground_biomass,to_mgha,bole-included biomass
+Version,Version,to_no_convert,FCCS version number

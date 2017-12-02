@@ -1,0 +1,42 @@
+# Fire and Fuels Tools Envionmental Inputs Scenario File
+# All units are in English. Miles/hr are converted to km/hr and degrees F are converted to C within the FFT app
+
+# Inputs required for all tools
+evName = Consume4_test_29171112_cronan
+
+# FCCS inputs (required for all tools)
+fm_herb = 60
+fm_shrub = 90
+fm_crown = 90
+fm_1hr = 6
+fm_10hr = 7
+fm_100hr = 8
+slope = 0
+windspeed = 4
+
+# Consume inputs (required for FEPS)
+con_shrub = 80
+con_canopy = 20
+con_piles = 90
+dayssincerain = 
+ignition_length = 
+fm_duff = 70
+fm_1000hr = 80
+harvested = 0
+source_fm_1000hr = MEAS-Th
+
+# FEPS inputs
+temp_min = 
+temp_max = 
+rh_min = 
+rh_max = 
+midflame_windspeed_min = 
+midflame_windspeed_max = 
+transport_windspeed_min = 
+transport_windspeed_max = 
+fireShape = 
+sunrise = 
+midday = 
+sunset = 
+firestart = 
+firestop = 

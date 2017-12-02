@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FCCS_file xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" schemaVersion="1.4" xsi:schemaLocation="/conf/\us.fed.fs.fera.fccs.xsd">
+  <fuelbed_number>1264</fuelbed_number>
+  <fuelbed_name>Pasture or grass field</fuelbed_name>
+  <fuelbed_description>Pasture or grass crop field. Fuelbed represents field during growing season.</fuelbed_description>
+  <ecoregion>220,240,260,250,420,410,230,340,330,320,310,210</ecoregion>
+  <vegetation_form>3</vegetation_form>
+  <structural_class></structural_class>
+  <cover_type>404</cover_type>
+  <change_agent>18</change_agent>
+  <natural_fire_regime></natural_fire_regime>
+  <condition_class></condition_class>
+  <user_name></user_name>
+  <address></address>
+  <affiliation></affiliation>
+  <phone></phone>
+  <file_owner_email></file_owner_email>
+  <notes>Placed total residue loading provided by Michigan Tech in nonwoody1 category. Also included some nonwoody litter.
+</notes>
+  <date_collected>Mar 5, 2013</date_collected>
+  <fuelbed_confidence></fuelbed_confidence>
+  <fuelbed>
+    <canopy>
+      <trees>
+        <total_percent_cover unit="number"></total_percent_cover>
+        <overstory>
+          <percent_cover unit="number"></percent_cover>
+          <height unit="feet"></height>
+          <height_to_live_crown unit="feet"></height_to_live_crown>
+          <stem_density unit="number_per_acre"></stem_density>
+          <diameter_at_breast_height unit="inches"></diameter_at_breast_height>
+          <species></species>
+        </overstory>
+        <midstory>
+          <percent_cover unit="number"></percent_cover>
+          <height unit="feet"></height>
+          <height_to_live_crown unit="feet"></height_to_live_crown>
+          <stem_density unit="number_per_acre"></stem_density>
+          <diameter_at_breast_height unit="inches"></diameter_at_breast_height>
+          <species></species>
+        </midstory>
+        <understory>
+          <percent_cover unit="number"></percent_cover>
+          <height unit="feet"></height>
+          <height_to_live_crown unit="feet"></height_to_live_crown>
+          <stem_density unit="number_per_acre"></stem_density>
+          <diameter_at_breast_height unit="inches"></diameter_at_breast_height>
+          <species></species>
+        </understory>
+      </trees>
+      <snags>
+        <class_1_conifers_with_foliage>
+          <percent_cover unit="number"></percent_cover>
+          <height_to_crown_base unit="feet"></height_to_crown_base>
+          <stem_density unit="number_per_acre"></stem_density>
+          <diameter unit="inches"></diameter>
+          <height unit="feet"></height>
+          <species></species>
+        </class_1_conifers_with_foliage>
+        <class_1_all_others>
+          <stem_density unit="number_per_acre"></stem_density>
+          <diameter unit="inches"></diameter>
+          <height unit="feet"></height>
+          <species></species>
+        </class_1_all_others>
+        <class_2>
+          <stem_density unit="number_per_acre"></stem_density>
+          <diameter unit="inches"></diameter>
+          <height unit="feet"></height>
+          <species></species>
+        </class_2>
+        <class_3>
+          <stem_density unit="number_per_acre"></stem_density>
+          <diameter unit="inches"></diameter>
+          <height unit="feet"></height>
+          <species></species>
+        </class_3>
+      </snags>
+      <ladder_fuels>
+        <minimum_height unit="feet"></minimum_height>
+        <maximum_height unit="feet"></maximum_height>
+        <is_vertically_contiguous></is_vertically_contiguous>
+        <type></type>
+      </ladder_fuels>
+    </canopy>
+    <shrubs>
+      <primary_layer>
+        <percent_cover unit="number"></percent_cover>
+        <height unit="feet"></height>
+        <percent_live unit="number"></percent_live>
+        <species></species>
+      </primary_layer>
+      <secondary_layer>
+        <percent_cover unit="number"></percent_cover>
+        <height unit="feet"></height>
+        <percent_live unit="number"></percent_live>
+        <species></species>
+      </secondary_layer>
+      <needle_drape>
+        <is_sufficient_to_affect_fire_behavior>0</is_sufficient_to_affect_fire_behavior>
+      </needle_drape>
+    </shrubs>
+    <herbaceous>
+      <primary_layer>
+        <percent_cover unit="number" min="-3" max="-3">100</percent_cover>
+        <height unit="feet" min="-3" max="-3">1.5</height>
+        <loading unit="tons_per_acre" min="-3" max="-3">2.5</loading>
+        <percent_live unit="number" min="-3" max="-3">100</percent_live>
+        <species>
+          <species_description>
+            <tsn>41088</tsn>
+            <relative_cover>100.00</relative_cover>
+          </species_description>
+        </species>
+      </primary_layer>
+      <secondary_layer>
+        <percent_cover unit="number"></percent_cover>
+        <height unit="feet"></height>
+        <loading unit="tons_per_acre"></loading>
+        <percent_live unit="number"></percent_live>
+        <species></species>
+      </secondary_layer>
+    </herbaceous>
+    <woody_fuel>
+      <all_downed_woody_fuel>
+        <total_percent_cover unit="number"></total_percent_cover>
+        <depth unit="inches"></depth>
+      </all_downed_woody_fuel>
+      <sound_wood>
+        <all_sound_wood>
+          <species></species>
+        </all_sound_wood>
+        <loadings_zero_to_three_inches>
+          <zero_to_quarter_inch unit="tons_per_acre"></zero_to_quarter_inch>
+          <quarter_inch_to_one_inch unit="tons_per_acre"></quarter_inch_to_one_inch>
+          <one_to_three_inches unit="tons_per_acre"></one_to_three_inches>
+        </loadings_zero_to_three_inches>
+        <loadings_greater_than_three_inches>
+          <three_to_nine_inches unit="tons_per_acre"></three_to_nine_inches>
+          <nine_to_twenty_inches unit="tons_per_acre"></nine_to_twenty_inches>
+          <greater_than_twenty_inches unit="tons_per_acre"></greater_than_twenty_inches>
+        </loadings_greater_than_three_inches>
+      </sound_wood>
+      <rotten_wood>
+        <all_rotten_wood>
+          <species></species>
+        </all_rotten_wood>
+        <loadings_greater_than_three_inches>
+          <three_to_nine_inches unit="tons_per_acre"></three_to_nine_inches>
+          <nine_to_twenty_inches unit="tons_per_acre"></nine_to_twenty_inches>
+          <greater_than_twenty_inches unit="tons_per_acre"></greater_than_twenty_inches>
+        </loadings_greater_than_three_inches>
+      </rotten_wood>
+      <stumps>
+        <sound>
+          <stem_density unit="number_per_acre"></stem_density>
+          <diameter unit="inches"></diameter>
+          <height unit="feet"></height>
+          <species></species>
+        </sound>
+        <rotten>
+          <stem_density unit="number_per_acre"></stem_density>
+          <diameter unit="inches"></diameter>
+          <height unit="feet"></height>
+          <species></species>
+        </rotten>
+        <lightered_pitchy>
+          <stem_density unit="number_per_acre"></stem_density>
+          <diameter unit="inches"></diameter>
+          <height unit="feet"></height>
+          <species></species>
+        </lightered_pitchy>
+      </stumps>
+    </woody_fuel>
+    <moss_lichen_litter>
+      <moss>
+        <type></type>
+        <percent_cover unit="number"></percent_cover>
+        <depth unit="inches"></depth>
+      </moss>
+      <ground_lichen>
+        <percent_cover unit="number"></percent_cover>
+        <depth unit="inches"></depth>
+      </ground_lichen>
+      <litter>
+        <percent_cover unit="number" min="-3" max="-3">65</percent_cover>
+        <depth unit="inches" min="-3" max="-3">0.5</depth>
+        <arrangement>1</arrangement>
+        <litter_type>
+          <short_needle_pine>
+            <relative_cover></relative_cover>
+          </short_needle_pine>
+          <long_needle_pine>
+            <relative_cover></relative_cover>
+          </long_needle_pine>
+          <other_conifer>
+            <relative_cover></relative_cover>
+          </other_conifer>
+          <broadleaf_deciduous>
+            <relative_cover></relative_cover>
+          </broadleaf_deciduous>
+          <broadleaf_evergreen>
+            <relative_cover></relative_cover>
+          </broadleaf_evergreen>
+          <palm_frond>
+            <relative_cover></relative_cover>
+          </palm_frond>
+          <grass>
+            <relative_cover>100.00</relative_cover>
+          </grass>
+        </litter_type>
+      </litter>
+    </moss_lichen_litter>
+    <ground_fuel>
+      <duff>
+        <upper>
+          <depth unit="inches"></depth>
+          <percent_cover unit="number"></percent_cover>
+          <derivation></derivation>
+        </upper>
+        <lower>
+          <depth unit="inches"></depth>
+          <percent_cover unit="number"></percent_cover>
+          <derivation></derivation>
+        </lower>
+      </duff>
+      <squirrel_middens>
+        <depth unit="inches"></depth>
+        <radius unit="feet"></radius>
+        <number_per_unit_area unit="number_per_acre"></number_per_unit_area>
+      </squirrel_middens>
+      <basal_accumulation>
+        <depth unit="inches"></depth>
+        <radius unit="feet"></radius>
+        <number_per_unit_area unit="number_per_acre"></number_per_unit_area>
+        <type></type>
+      </basal_accumulation>
+    </ground_fuel>
+  </fuelbed>
+</FCCS_file>

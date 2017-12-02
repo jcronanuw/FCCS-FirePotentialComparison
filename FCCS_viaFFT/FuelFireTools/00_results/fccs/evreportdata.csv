@@ -1,0 +1,2 @@
+UnitSize,Permit,Type,BUName,EVName,UseMetric,Wind,Slope,FM1,FM10,FM100,FM1000,FMDuff,FMHerb,FMShrub,ConCanopy,ConShrub,ConPiles
+,,,,FCCS Benchmark Inputs,False,4,0,6,7,8,na,na,60,90,na,na,na

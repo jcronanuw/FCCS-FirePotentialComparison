@@ -1,0 +1,50 @@
+# =============================================================================,,,
+# Use this file to customize FCCS output.,,,
+#,,,
+# This file contains 3 columns -- FCCS name, Your name, conversion for metric,
+# ,,,
+# To design a new report, copy this file to a new file named appropriatly. Next,,
+# delete the lines you don't want (or commnent them out with '#'). Customize the,,,
+# second column as you want - this will be the name for the column in your report.,,,
+# ,,,
+# Conversion methods are:,,,
+#   - to_no_convert,,,
+#   - to_mgha,,,
+#   - to_meter,,,
+#   - to_meter_per_min,,,
+#   - to_centimeter,,,
+#   - to_kJ_per_m2,,,
+# Header info: ""Surface fire behavior report.  First fire behavior outputs are from benchmark environmental",,,
+# conditions (D2L2 fuel moisture, 4mph wind, no slope).  Second fire behavior outputs are from",,,
+# user specified environmental conditions and begin with 'user_'""",,,
+# =============================================================================,,,
+Filename,Filename,to_no_convert,Fuelbed filename
+Fuelbed_number,FB_ID,to_no_convert,Fuelbed ID
+Fuelbed_name,FB_name,to_no_convert,Fuelbed name
+Benchmark_ROS,ROS,to_meter_per_min,Rate of spread under benchmark environmental inputs
+Benchmark_FL,FL,to_meter,Flame length under benchmark environmental inptus
+Benchmark_RI,RI,to_kJ_per_m2,Reaction intensity under benchmark environmental inputs
+Benchmark_RI_Shrub,RI_Shrub,to_kJ_per_m2,"Reaction intensity, shrub stratum under benchmark environmental inputs"
+Benchmark_RI_Herb,RI_Herb,to_kJ_per_m2,"Reaction intensity, herb stratum under benchmark environmental inputs"
+Benchmark_RI_Wood,RI_Wood,to_kJ_per_m2,"Reaction intensity, wood stratum under benchmark environmental inputs"
+Benchmark_RI_LLM,RI_LLM,to_kJ_per_m2,"Reaction intensity, litter-lichen-moss stratum under benchmark environmental inputs"
+Crosswalk13,Xwalk13,to_no_convert,Suggested crosswalk to one of the 13 original fire behavior prediction system fuel models under benchmark environmental inputs
+ROS%13,ROS%13,to_no_convert,Percent difference of predicted rate of spread in FCCS versus for suggested fuel model under benchmark environmental inputs
+FL%13,FL%13,to_no_convert,Percent difference of predicted flame length in FCCS versus for suggested fuel model under benchmark environmental inputs
+Crosswalk40,Xwalk40,to_no_convert,Suggested crosswalk to one of the 40 standard fuel models under benchmark environmental inputs
+ROS%40,ROS%40,to_no_convert,Percent difference of predicted rate of spread in FCCS versus for suggested fuel model under benchmark environmental inputs
+FL%40,FL%40,to_no_convert,Percent difference of predicted flame length in FCCS versus for suggested fuel model under benchmark environmental inputs
+Custom_ROS,User_ROS,to_meter_per_min,Rate of spread under user-specified environmental inputs
+Custom_FL,User_FL,to_meter,Flame length under user-specified environmental inputs
+Custom_RI,User_RI,to_kJ_per_m2,Reaction intensity under user-specified environmental inputs
+Custom_RI_Shrub,User_RI_Shrub,to_kJ_per_m2,"Reaction intensity, shrub stratum under user-specified environmental inputs"
+Custom_RI_Herb,User_RI_Herb,to_kJ_per_m2,"Reaction intensity, herb stratum under user-specified environmental inputs"
+Custom_RI_Wood,User_RI_Wood,to_kJ_per_m2,"Reaction intensity, wood stratum under user-specified environmental inputs"
+Custom_RI_LLM,User_RI_LLM,to_kJ_per_m2,"Reaction intensity, litter-lichen-moss stratum under user-specified environmental inputs"
+Custom_Crosswalk13,User_Xwalk13,to_no_convert,Suggested crosswalk to one of the 13 original fire behavior prediction system fuel models under user-specified environmental inputs
+Custom_ROS%13,User_ROS%13,to_no_convert,Percent difference of predicted rate of spread in FCCS versus for suggested fuel model under user-specified environmental inputs
+Custom_FL%13,User_FL%13,to_no_convert,Percent difference of predicted flame length in FCCS versus for suggested fuel model under user-specified environmental inputs
+Custom_Crosswalk40,User_Xwalk40,to_no_convert,Suggested crosswalk to one of the 40 standard fuel models  under user-specified environmental inputs
+Custom_ROS%40,User_ROS%40,to_no_convert,Percent difference of predicted rate of spread in FCCS versus for suggested fuel model under user-specified environmental inputs
+Custom_FL%40,User_FL%40,to_no_convert,Percent difference of predicted flame length in FCCS versus for suggested fuel model
+Version,Version,to_no_convert,FCCS version number

@@ -1,0 +1,7 @@
+UnitName=x25Mile
+UnitSize=100
+BurnDate=10/01/16
+PermitNo=11
+BurnType=Prescribed
+Notes=Test
+Fuelbeds=C:\FuelFireTools\FCCS_3\fuelbeds\FB_0052_25Mile_2017.xml,100,Natural (Western),25Mile
