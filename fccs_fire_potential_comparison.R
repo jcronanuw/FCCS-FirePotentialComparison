@@ -17,8 +17,7 @@
 rm(list=ls())
 dev.off()
 
-entireScript <- function() {
-b <- 1
+
 ##############################################################################################################
 ##############################################################################################################
 #STEP 1: ADMINISTRATIVE TASKS
@@ -29,11 +28,35 @@ setwd(input_path)
 
 ##############################################################################################################
 ##############################################################################################################
-#STEP 2: LOAD DATA
+#STEP 2: CREATE FUNCTIONS
+
+#Create a function that will recode the five digit fuelbed numbers as seven digit fuelbed numbers used
+#in FDM
+recode <- function(x) {
+  as.numeric(paste(strsplit(x, "")[[1]][1], 
+                   "0", 
+                   strsplit(x, "")[[1]][2],
+                   strsplit(x, "")[[1]][3],
+                   strsplit(x, "")[[1]][4],
+                   "0", 
+                   strsplit(x, "")[[1]][5], sep = ""))
+}
+
+##############################################################################################################
+##############################################################################################################
+#STEP 3: LOAD & TEST DATA
 
 #Load evaluation of synchronicity between STM, .xml, and FDM fuelbeds
-try(fbsa <- read.table("inputs/fuelbed_synchronicty.csv", 
-                  header=TRUE, sep=",", na.strings="NA", dec=".", strip.white=TRUE), silent = T)
+fbsa <- read.table("inputs/fuelbed_synchronicty.csv", 
+                  header=TRUE, sep=",", na.strings="NA", dec=".", strip.white=TRUE)
+
+#Recode the $andreu_fuelbed_no integers so they are the same as the FDM inputs.
+fbra <- as.character(fbsa$andreu_fuelbed_no)
+
+#Apply function
+fbrb <- sapply(fbra, recode)
+fbsa$andreu_fuelbed_no <- fbrb
+
 #strip out columns from sef_lut_all.csv and instead load that dataset from EglinAirForceBase repo.
 fbsb <- fbsa[,1:4]
 
@@ -41,27 +64,13 @@ fbsb <- fbsa[,1:4]
 lut <- read.table("C:/Users/jcronan/Documents/GitHub/EglinAirForceBase/inputs/sef_lut_all.csv", 
                    header=TRUE, sep=",", na.strings="NA", dec=".", strip.white=TRUE)
 
-#Compare fuelbed lists in scynchronicity file and looup table. If they are different kill the script.
-if(all.equal(fbsb$fuelbed, lut$fuelbed) == T)
-  {
-  a <- 1} else {
-  stop("fuelbed lists are different")
-}
+#Compare fuelbed lists in scynchronicity file and lookup table. If they are different kill the script.
+all.equal(fbsb$fuelbed, lut$fuelbed)
 
-
-#if(all.equal(c(1,2,2,4), c(1,2,3,4)) == T)
-write.table(b, file = paste(input_path, "test.txt",sep = ""), 
-            append = FALSE, quote = TRUE, sep = " ", eol = "\n", na = "NA", 
-            dec = ".", row.names = FALSE,col.names = FALSE, qmethod = 
-              c("escape", "double"))#   
-}
-
-entireScript()
-
-#Load initial comparison of predicted rate of spread for FCCS fuelbeds.
+#Load initial FCCS fire behavior predictions.
 #Fuel Moisture scenario -- 1
 #Transformations -- None
-ros <- read.table("FCCS_fire_potentials_summary/fccs_ros_moistScenario_1_tansformation_none.csv", 
+fccs_fireBehavior <- read.table("inputs/fccs_ros_moistScenario_1_tansformation_none.csv", 
                           header=TRUE, sep=",", na.strings="NA", dec=".", strip.white=TRUE)
 
 ##############################################################################################################
@@ -75,11 +84,6 @@ ros11 <- data.frame(number = potentials_1_1$Fuelbed_number, name = potentials_1_
 barplot(height = ros11$ros, width = 1, names.arg = ros11$name)
 
 ?barplot
-
-
-entireScript <- function() {b <- 1}
-
-entireScript()
 
 
 
