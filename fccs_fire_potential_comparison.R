@@ -1493,6 +1493,17 @@ popViewport(3)
 #RESPONSE:
 #Compare systematically derived PIGs with Benchmark ROS-derived PIGs
 
+#Calculate the deviation between the two
+pig_dev <- fbsd$cronan_pig - fbsd$fccs_pig
+
+#Create a data frame that can be used for analysis.
+fbse <- data.frame(fuelbed = fbsd$fuelbed, andreu_fuelbed_no = fbsd$andreu_fuelbed_no, 
+                   benchmark_ros = fbsd$benchmark_ros, fccd_pig = bros_pig, 
+                   cronan_pig = sys_pigs, 
+                   pig_dev = pig_dev, 
+                   topo = fcc[,1], 
+                   cover = fcc[,3], treatment = fcc[,4], mfri = fcc[,5], age = fcc[,7])
+
 ##############################################################################################################
 ##############################################################################################################
 ##############################################################################################################
@@ -1569,7 +1580,667 @@ popViewport(3)
 
 ##############################################################################################################
 ##############################################################################################################
-#STEP 13: 
+##############################################################################################################
+##############################################################################################################
+#STEP 22: 
 #SELECTED NATURAL FUELS FOR NATURAL FUELBEDS ACROSS ALL TOPOGRAPHIC POSITIONS.
+
+#Subset selected natural fuelbeds by topographic position.
+#Wet Flatlands
+wet_flatlands <- fbse[fbse$fuelbed %in% c(1011101:1011106, 
+                                          1011201:1011206, 
+                                          1011301:1011306, 
+                                          1031401:1031406),]
+wet_flatlands <- wet_flatlands[order(wet_flatlands$fuelbed),]
+
+#Mesic Flatlands
+mesic_flatlands <- fbse[fbse$fuelbed %in% c(2011101:2011106, 
+                                            2011201:2011206, 
+                                            2011301:2011306, 
+                                            2031401:2031406),]
+mesic_flatlands <- mesic_flatlands[order(mesic_flatlands$fuelbed),]
+
+#Mesic Uplands
+mesic_uplands <- fbse[fbse$fuelbed %in% c(3011101:3011106, 
+                                          3011201:3011206, 
+                                          3011301:3011306, 
+                                          3031401:3031406),]
+mesic_uplands <- mesic_uplands[order(mesic_uplands$fuelbed),]
+
+#Xeric Uplands
+xeric_uplands <- fbse[fbse$fuelbed %in% c(4011101:4011106, 
+                                          4011201:4011206, 
+                                          4011301:4011306, 
+                                          4031401:4031406),]
+xeric_uplands <- xeric_uplands[order(xeric_uplands$fuelbed),]
+
+#Column number of fuelbed parameter you want to look at
+type <-6 #5 = Eglin staff predictions for probability of ignition.
+
+#Font size for all text in plot
+font <- 0.7
+mult <- 1
+
+#Layout panels
+nf <- layout(matrix(c(1,2,3,4), 2, 2, byrow = TRUE))
+layout.show(nf)
+
+#Colors from yellow to red for fire frequency (high to low)
+colors_fr <- c("grey", "yellow", "orange", "red", "dark red")
+
+#Wet Flatlands
+par(cex = font*mult)
+wf_cat <- barplot(wet_flatlands[,type], wet_flatlands$fuelbed, 
+                  col = mapply(function(y) colors_fr[y+1], 
+                               wet_flatlands$mfri), 
+                  names.arg = NULL, 
+                  main = paste("Wet Flatlands", 
+                               names(wet_flatlands)[type], 
+                               sep = " "), 
+                  ylim = c(min(wet_flatlands[,type], 
+                               mesic_flatlands[,type], 
+                               mesic_uplands[,type], 
+                               xeric_uplands[,type]), 
+                           max(wet_flatlands[,type],
+                               mesic_flatlands[,type],
+                               mesic_uplands[,type],
+                               xeric_uplands[,type])))
+
+vps <- baseViewports()
+pushViewport(vps$inner, vps$figure, vps$plot)
+
+grid.text(as.character(wet_flatlands$fuelbed),
+          x = unit(wf_cat, "native"), y=unit(-1, "lines"),
+          just="right", rot=50, gp = gpar(cex = font))
+popViewport(3)
+
+#Mesic Flatlands
+mf_cat <- barplot(mesic_flatlands[,type], mesic_flatlands$fuelbed, 
+                  col = mapply(function(y) colors_fr[y+1], 
+                               mesic_flatlands$mfri), 
+                  names.arg = NULL, 
+                  main = paste("Mesic Flatlands", 
+                               names(mesic_flatlands)[type], 
+                               sep = " "), 
+                  ylim = c(min(wet_flatlands[,type], 
+                               mesic_flatlands[,type], 
+                               mesic_uplands[,type], 
+                               xeric_uplands[,type]), 
+                           max(wet_flatlands[,type],
+                               mesic_flatlands[,type],
+                               mesic_uplands[,type],
+                               xeric_uplands[,type])))
+
+vps <- baseViewports()
+pushViewport(vps$inner, vps$figure, vps$plot)
+
+
+grid.text(as.character(mesic_flatlands$fuelbed),
+          x = unit(mf_cat, "native"), y=unit(-1, "lines"),
+          just="right", rot=50, gp = gpar(cex = font))
+popViewport(3)
+
+#Mesic Uplands
+mu_cat <- barplot(mesic_uplands[,type], mesic_uplands$fuelbed, 
+                  col = mapply(function(y) colors_fr[y+1], 
+                               mesic_uplands$mfri), 
+                  names.arg = NULL, 
+                  main = paste("Mesic Uplands", 
+                               names(mesic_uplands)[type], 
+                               sep = " "), 
+                  ylim = c(min(wet_flatlands[,type], 
+                               mesic_flatlands[,type], 
+                               mesic_uplands[,type], 
+                               xeric_uplands[,type]), 
+                           max(wet_flatlands[,type],
+                               mesic_flatlands[,type],
+                               mesic_uplands[,type],
+                               xeric_uplands[,type])))
+
+vps <- baseViewports()
+pushViewport(vps$inner, vps$figure, vps$plot)
+
+grid.text(as.character(mesic_uplands$fuelbed),
+          x = unit(mu_cat, "native"), y=unit(-1, "lines"),
+          just="right", rot=50, gp = gpar(cex = font))
+popViewport(3)
+
+#Xeric Uplands
+xu_cat <- barplot(xeric_uplands[,type], xeric_uplands$fuelbed, 
+                  col = mapply(function(y) colors_fr[y+1], 
+                               xeric_uplands$mfri), 
+                  names.arg = NULL, 
+                  main = paste("Xeric Uplands", 
+                               names(xeric_uplands)[type], 
+                               sep = " "), 
+                  ylim = c(min(wet_flatlands[,type], 
+                               mesic_flatlands[,type], 
+                               mesic_uplands[,type], 
+                               xeric_uplands[,type]), 
+                           max(wet_flatlands[,type],
+                               mesic_flatlands[,type],
+                               mesic_uplands[,type],
+                               xeric_uplands[,type])))
+
+vps <- baseViewports()
+pushViewport(vps$inner, vps$figure, vps$plot)
+
+
+grid.text(as.character(xeric_uplands$fuelbed),
+          x = unit(xu_cat, "native"), y=unit(-1, "lines"),
+          just="right", rot=50, gp = gpar(cex = font))
+popViewport(3)
+
+#Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
+#expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
+#are higher than expected.
+
+#NEXT STEP, LOOK AT WIDER RANGE OF FUELBEDS IN EACH TOPOGRAPHIC POSITION; START WITH WET FLATLANDS
+
+##############################################################################################################
+##############################################################################################################
+#STEP 23: 
+#ALL NATURAL FUELBEDS IN WET FLATLANDS.
+
+#Subset all natural fuelbeds in wet flatlands fuelbeds.
+wet_flatlands <- fbse[fbse$topo == 1 & fbse$treatment == 1,]
+
+#Column number of fuelbed parameter you want to look at
+type <-type #5 = Eglin staff predictions for probability of ignition.
+
+#Font size for all text in plot
+font <- 0.7
+mult <- 1
+
+#Colors from yellow to red for fire frequency (high to low)
+colors_fr <- c("grey", "yellow", "orange", "red", "dark red")
+
+#Wet Flatlands
+dev.off()
+par(cex = font*mult)
+wf_acat <- barplot(wet_flatlands[,type], wet_flatlands$fuelbed, 
+                   col = mapply(function(y) colors_fr[y+1], 
+                                wet_flatlands$mfri), 
+                   names.arg = NULL, 
+                   main = paste("Wet Flatlands", 
+                                names(wet_flatlands)[type], 
+                                sep = " "), 
+                   ylim = c(min(wet_flatlands[,type]), 
+                            max(wet_flatlands[,type])))
+
+vps <- baseViewports()
+pushViewport(vps$inner, vps$figure, vps$plot)
+
+grid.text(as.character(wet_flatlands$fuelbed),
+          x = unit(wf_acat, "native"), y=unit(-1, "lines"),
+          just="right", rot=50, gp = gpar(cex = font))
+popViewport(3)
+
+#Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
+#expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
+#are higher than expected. The only exception are titi swamps.
+
+#NEXT STEP, LOOK AT WIDER RANGE OF FUELBEDS IN MESIC FLATLANDS
+
+##############################################################################################################
+##############################################################################################################
+#STEP 24: 
+#ALL NATURAL FUELBEDS IN MESIC FLATLANDS.
+
+#Subset all natural fuelbeds for mesic flatlands
+mesic_flatlands <- fbse[fbse$topo == 2 & fbse$treatment == 1,]
+
+#Column number of fuelbed parameter you want to look at
+type <-type
+
+#Font size for all text in plot
+font <- 0.7
+mult <- 1
+
+#Colors from yellow to red for fire frequency (high to low)
+colors_fr <- c("grey", "yellow", "orange", "red", "dark red")
+
+#Wet Flatlands
+par(cex = font*mult)
+wf_acat <- barplot(mesic_flatlands[,type], mesic_flatlands$fuelbed, 
+                   col = mapply(function(y) colors_fr[y+1], 
+                                mesic_flatlands$mfri), 
+                   names.arg = NULL, 
+                   main = paste("Mesic Flatlands", 
+                                names(mesic_flatlands)[type], 
+                                sep = " "), 
+                   ylim = c(min(mesic_flatlands[,type]), 
+                            max(mesic_flatlands[,type])))
+
+vps <- baseViewports()
+pushViewport(vps$inner, vps$figure, vps$plot)
+
+grid.text(as.character(mesic_flatlands$fuelbed),
+          x = unit(wf_acat, "native"), y=unit(-1, "lines"),
+          just="right", rot=50, gp = gpar(cex = font))
+popViewport(3)
+
+#Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
+#expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
+#are higher than expected.
+
+#NEXT STEP, LOOK AT WIDER RANGE OF FUELBEDS IN MESIC UPLANDS
+
+##############################################################################################################
+##############################################################################################################
+#STEP 25: 
+#ALL NATURAL FUELBEDS IN MESIC UPLANDS.
+
+#Subset all natural fuelbeds for mesic uplands
+mesic_uplands <- fbse[fbse$topo == 3 & fbse$treatment == 1,]
+
+#Column number of fuelbed parameter you want to look at
+type <-type
+
+#Font size for all text in plot
+font <- 0.7
+mult <- 1
+
+#Colors from yellow to red for fire frequency (high to low)
+colors_fr <- c("grey", "yellow", "orange", "red", "dark red")
+
+#Wet Flatlands
+par(cex = font*mult)
+wf_acat <- barplot(mesic_uplands[,type], mesic_uplands$fuelbed, 
+                   col = mapply(function(y) colors_fr[y+1], 
+                                mesic_uplands$mfri), 
+                   names.arg = NULL, 
+                   main = paste("Mesic Uplands", 
+                                names(mesic_uplands)[type], 
+                                sep = " "), 
+                   ylim = c(min(mesic_uplands[,type]), 
+                            max(mesic_uplands[,type])))
+
+vps <- baseViewports()
+pushViewport(vps$inner, vps$figure, vps$plot)
+
+grid.text(as.character(mesic_uplands$fuelbed),
+          x = unit(wf_acat, "native"), y=unit(-1, "lines"),
+          just="right", rot=50, gp = gpar(cex = font))
+popViewport(3)
+
+#Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
+#expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
+#are higher than expected.
+
+#NEXT STEP, LOOK AT WIDER RANGE OF FUELBEDS IN XERIC UPLANDS
+
+##############################################################################################################
+##############################################################################################################
+#STEP 26: 
+#ALL NATURAL FUELBEDS IN XERIC UPLANDS.
+
+#Subset all natural fuelbeds for xeric uplands
+xeric_uplands <- fbse[fbse$topo == 4 & fbse$treatment == 1,]
+
+#Column number of fuelbed parameter you want to look at
+type <-type
+
+#Font size for all text in plot
+font <- 0.7
+mult <- 1
+
+#Colors from yellow to red for fire frequency (high to low)
+colors_fr <- c("grey", "yellow", "orange", "red", "dark red")
+
+#Wet Flatlands
+par(cex = font*mult)
+wf_acat <- barplot(xeric_uplands[,type], xeric_uplands$fuelbed, 
+                   col = mapply(function(y) colors_fr[y+1], 
+                                xeric_uplands$mfri), 
+                   names.arg = NULL, 
+                   main = paste("Xeric Uplands", 
+                                names(xeric_uplands)[type], 
+                                sep = " "), 
+                   ylim = c(min(xeric_uplands[,type]), 
+                            max(xeric_uplands[,type])))
+
+vps <- baseViewports()
+pushViewport(vps$inner, vps$figure, vps$plot)
+
+grid.text(as.character(xeric_uplands$fuelbed),
+          x = unit(wf_acat, "native"), y=unit(-1, "lines"),
+          just="right", rot=50, gp = gpar(cex = font))
+popViewport(3)
+
+#Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
+#expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
+#are higher than expected.
+
+#NEXT STEP, LOOK AT WIDER RANGE OF FUELBEDS IN  PLANTATIONS
+
+##############################################################################################################
+##############################################################################################################
+#STEP 27: 
+#ALL PLANTATION FUELBEDS IN ALL TOPOGRAPHIC POSITIONS
+
+#Subset all plantation fuelbeds by topographic position.
+wet_flatlands <- fbse[fbse$topo == 1 & fbse$treatment == 5,]
+mesic_flatlands <- fbse[fbse$topo == 2 & fbse$treatment == 5,]
+mesic_uplands <- fbse[fbse$topo == 3 & fbse$treatment == 5,]
+xeric_uplands <- fbse[fbse$topo == 4 & fbse$treatment == 5,]
+
+#Column number of fuelbed parameter you want to look at
+type <-type
+
+#Font size for all text in plot
+font <- 0.7
+mult <- 1
+
+#Layout panels
+nf <- layout(matrix(c(1,2,3,4), 2, 2, byrow = TRUE))
+layout.show(nf)
+
+#Colors from yellow to red for fire frequency (high to low)
+colors_fr <- c("grey", "yellow", "orange", "red", "dark red")
+
+#Wet Flatlands
+par(cex = font*mult)
+wf_cat <- barplot(wet_flatlands[,type], wet_flatlands$fuelbed, 
+                  col = mapply(function(y) colors_fr[y+1], 
+                               wet_flatlands$mfri), 
+                  names.arg = NULL, 
+                  main = paste("Wet Flatlands", 
+                               names(wet_flatlands)[type], 
+                               sep = " "), 
+                  ylim = c(min(wet_flatlands[,type], 
+                               mesic_flatlands[,type], 
+                               mesic_uplands[,type], 
+                               xeric_uplands[,type]), 
+                           max(wet_flatlands[,type],
+                               mesic_flatlands[,type],
+                               mesic_uplands[,type],
+                               xeric_uplands[,type])))
+
+vps <- baseViewports()
+pushViewport(vps$inner, vps$figure, vps$plot)
+
+grid.text(as.character(wet_flatlands$fuelbed),
+          x = unit(wf_cat, "native"), y=unit(-1, "lines"),
+          just="right", rot=50, gp = gpar(cex = font))
+popViewport(3)
+
+#Mesic Flatlands
+mf_cat <- barplot(mesic_flatlands[,type], mesic_flatlands$fuelbed, 
+                  col = mapply(function(y) colors_fr[y+1], 
+                               mesic_flatlands$mfri), 
+                  names.arg = NULL, 
+                  main = paste("Mesic Flatlands", 
+                               names(mesic_flatlands)[type], 
+                               sep = " "), 
+                  ylim = c(min(wet_flatlands[,type], 
+                               mesic_flatlands[,type], 
+                               mesic_uplands[,type], 
+                               xeric_uplands[,type]), 
+                           max(wet_flatlands[,type],
+                               mesic_flatlands[,type],
+                               mesic_uplands[,type],
+                               xeric_uplands[,type])))
+
+vps <- baseViewports()
+pushViewport(vps$inner, vps$figure, vps$plot)
+
+
+grid.text(as.character(mesic_flatlands$fuelbed),
+          x = unit(mf_cat, "native"), y=unit(-1, "lines"),
+          just="right", rot=50, gp = gpar(cex = font))
+popViewport(3)
+
+#Mesic Uplands
+mu_cat <- barplot(mesic_uplands[,type], mesic_uplands$fuelbed, 
+                  col = mapply(function(y) colors_fr[y+1], 
+                               mesic_uplands$mfri), 
+                  names.arg = NULL, 
+                  main = paste("Mesic Uplands", 
+                               names(mesic_uplands)[type], 
+                               sep = " "), 
+                  ylim = c(min(wet_flatlands[,type], 
+                               mesic_flatlands[,type], 
+                               mesic_uplands[,type], 
+                               xeric_uplands[,type]), 
+                           max(wet_flatlands[,type],
+                               mesic_flatlands[,type],
+                               mesic_uplands[,type],
+                               xeric_uplands[,type])))
+
+vps <- baseViewports()
+pushViewport(vps$inner, vps$figure, vps$plot)
+
+grid.text(as.character(mesic_uplands$fuelbed),
+          x = unit(mu_cat, "native"), y=unit(-1, "lines"),
+          just="right", rot=50, gp = gpar(cex = font))
+popViewport(3)
+
+#Xeric Uplands
+xu_cat <- barplot(xeric_uplands[,type], xeric_uplands$fuelbed, 
+                  col = mapply(function(y) colors_fr[y+1], 
+                               xeric_uplands$mfri), 
+                  names.arg = NULL, 
+                  main = paste("Xeric Uplands", 
+                               names(xeric_uplands)[type], 
+                               sep = " "), 
+                  ylim = c(min(wet_flatlands[,type], 
+                               mesic_flatlands[,type], 
+                               mesic_uplands[,type], 
+                               xeric_uplands[,type]), 
+                           max(wet_flatlands[,type],
+                               mesic_flatlands[,type],
+                               mesic_uplands[,type],
+                               xeric_uplands[,type])))
+
+vps <- baseViewports()
+pushViewport(vps$inner, vps$figure, vps$plot)
+
+
+grid.text(as.character(xeric_uplands$fuelbed),
+          x = unit(xu_cat, "native"), y=unit(-1, "lines"),
+          just="right", rot=50, gp = gpar(cex = font))
+popViewport(3)
+
+#Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
+#expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
+#are higher than expected.
+
+#NEXT STEP, LOOK AT HOW PIGS CHANGE ACROSS RESTORATION TREATMENTS IN NATURAL FUELS
+
+##############################################################################################################
+##############################################################################################################
+#STEP 28: ALL RESTORATION FUELBEDS IN ALL NATURAL FUELBEDS FOR ALL TOPOGRAPHIC POSITIONS.
+#Evaluate the degree to which probability of ignition derived from FCCS rate of spread predictions
+#correlates with probability of ignition derived from Eglin staff meetings.
+
+#Subset restoration fuelbeds derived from natural fuels
+#Note ----- there are no restoration fuelbeds in wet or mesic flatlands
+mesic_uplands <- fbse[fbse$topo == 3 & fbse$treatment %in% c(2,3,4),]
+xeric_uplands <- fbse[fbse$topo == 4 & fbse$treatment %in% c(2,3,4),]
+
+#Column number of fuelbed parameter you want to look at
+type <-type
+
+#Font size for all text in plot
+font <- 0.7
+mult <- 1
+
+#Layout panels
+dev.off()
+nf <- layout(matrix(c(1,2), 2, 1, byrow = TRUE))
+layout.show(nf)
+
+#Mesic Uplands
+mu_cat <- barplot(mesic_uplands[,type], mesic_uplands$fuelbed, 
+                  col = mapply(function(y) colors_fr[y+1], 
+                               mesic_uplands$mfri), 
+                  names.arg = NULL, 
+                  main = paste("Mesic Uplands", 
+                               names(mesic_uplands)[type], 
+                               sep = " "), 
+                  ylim = c(min(wet_flatlands[,type], 
+                               mesic_flatlands[,type], 
+                               mesic_uplands[,type], 
+                               xeric_uplands[,type]), 
+                           max(wet_flatlands[,type],
+                               mesic_flatlands[,type],
+                               mesic_uplands[,type],
+                               xeric_uplands[,type])))
+
+vps <- baseViewports()
+pushViewport(vps$inner, vps$figure, vps$plot)
+
+grid.text(as.character(mesic_uplands$fuelbed),
+          x = unit(mu_cat, "native"), y=unit(-1, "lines"),
+          just="right", rot=50, gp = gpar(cex = font))
+popViewport(3)
+
+#Xeric Uplands
+xu_cat <- barplot(xeric_uplands[,type], xeric_uplands$fuelbed, 
+                  col = mapply(function(y) colors_fr[y+1], 
+                               xeric_uplands$mfri), 
+                  names.arg = NULL, 
+                  main = paste("Xeric Uplands", 
+                               names(xeric_uplands)[type], 
+                               sep = " "), 
+                  ylim = c(min(wet_flatlands[,type], 
+                               mesic_flatlands[,type], 
+                               mesic_uplands[,type], 
+                               xeric_uplands[,type]), 
+                           max(wet_flatlands[,type],
+                               mesic_flatlands[,type],
+                               mesic_uplands[,type],
+                               xeric_uplands[,type])))
+
+vps <- baseViewports()
+pushViewport(vps$inner, vps$figure, vps$plot)
+
+
+grid.text(as.character(xeric_uplands$fuelbed),
+          x = unit(xu_cat, "native"), y=unit(-1, "lines"),
+          just="right", rot=50, gp = gpar(cex = font))
+popViewport(3)
+
+#This output is much better than the first iteration (step 9).
+#As in step 9, there is the expected declining PIG as mfri lengthens, but there is also
+#the expected low PIG in young stands.
+
+#Trends are not quite as expected in step 10 (first iteration)
+#1) Post-thinning should have low PIGs >> they are too high
+#2) Post-herbicide should have PIGs near zero >> this is the case.
+#3) Herbicide recovery should have high PIGs >> this is the case.
+
+#Systematic PIG Improvements
+#1) Post-thinning PIGs are now very low. As expected.
+#2) No change. these were fine in the first iteration.
+#3) No change. these were fine in the first iteration.
+
+#Although not a major driver (restoration treatment is), trends for mFRI and stand age are 
+#improved over the first iteration.
+
+#NEXT STEP, LOOK AT HOW PIGS CHANGE ACROSS RESTORATION TREATMENTS IN PLANTATION FUELS
+
+#############################################################################################################
+##############################################################################################################
+#STEP 29: 
+#ALL RESTORATION FUELBEDS IN ALL PLANTATION FOR ALL TOPOGRAPHIC POSITIONS.
+
+#Subset restoration fuelbeds derived from plantations
+#Note ----- there are no restoration fuelbeds in wet or mesic flatlands
+mesic_uplands <- fbse[fbse$topo == 3 & fbse$treatment %in% c(6,7,8),]
+xeric_uplands <- fbse[fbse$topo == 4 & fbse$treatment %in% c(6,7,8),]
+
+#Column number of fuelbed parameter you want to look at
+type <-type
+
+#Font size for all text in plot
+font <- 0.7
+mult <- 1
+
+#Layout panels
+dev.off()
+nf <- layout(matrix(c(1,2), 2, 1, byrow = TRUE))
+layout.show(nf)
+
+#Mesic Uplands
+mu_cat <- barplot(mesic_uplands[,type], mesic_uplands$fuelbed, 
+                  col = mapply(function(y) colors_fr[y+1], 
+                               mesic_uplands$mfri), 
+                  names.arg = NULL, 
+                  main = paste("Mesic Uplands", 
+                               names(mesic_uplands)[type], 
+                               sep = " "), 
+                  ylim = c(min(wet_flatlands[,type], 
+                               mesic_flatlands[,type], 
+                               mesic_uplands[,type], 
+                               xeric_uplands[,type]), 
+                           max(wet_flatlands[,type],
+                               mesic_flatlands[,type],
+                               mesic_uplands[,type],
+                               xeric_uplands[,type])))
+
+vps <- baseViewports()
+pushViewport(vps$inner, vps$figure, vps$plot)
+
+grid.text(as.character(mesic_uplands$fuelbed),
+          x = unit(mu_cat, "native"), y=unit(-1, "lines"),
+          just="right", rot=50, gp = gpar(cex = font))
+popViewport(3)
+
+#Xeric Uplands
+xu_cat <- barplot(xeric_uplands[,type], xeric_uplands$fuelbed, 
+                  col = mapply(function(y) colors_fr[y+1], 
+                               xeric_uplands$mfri), 
+                  names.arg = NULL, 
+                  main = paste("Xeric Uplands", 
+                               names(xeric_uplands)[type], 
+                               sep = " "), 
+                  ylim = c(min(wet_flatlands[,type], 
+                               mesic_flatlands[,type], 
+                               mesic_uplands[,type], 
+                               xeric_uplands[,type]), 
+                           max(wet_flatlands[,type],
+                               mesic_flatlands[,type],
+                               mesic_uplands[,type],
+                               xeric_uplands[,type])))
+
+vps <- baseViewports()
+pushViewport(vps$inner, vps$figure, vps$plot)
+
+
+grid.text(as.character(xeric_uplands$fuelbed),
+          x = unit(xu_cat, "native"), y=unit(-1, "lines"),
+          just="right", rot=50, gp = gpar(cex = font))
+popViewport(3)
+
+#This output is much better than the first iteration (step 9).
+#As in step 9, there is the expected declining PIG as mfri lengthens, but there is also
+#the expected low PIG in young stands.
+
+#Trends are not quite as expected in step 10 (first iteration)
+#1) Post-thinning should have low PIGs >> they are too high
+#2) Post-herbicide should have PIGs near zero >> this is the case.
+#3) Herbicide recovery should have high PIGs >> this is the case.
+
+#Systematic PIG Improvements
+#1) Post-thinning PIGs are now very low. As expected.
+#2) No change. these were fine in the first iteration.
+#3) No change. these were fine in the first iteration.
+
+#Although not a major driver (restoration treatment is), trends for mFRI and stand age are 
+#improved over the first iteration.
+
+############
+#Start here
+#1) Redo systematic PIG calcs so max is one -- currently they can multiply to > 1
+#2) Fix salt march PIG in fccs-derived values
+#3) Use deviation from expected values to identify patterns in fccs-derived values that
+#   are largest.
+
+plot(fbse$cronan_pig, fbse$fccd_pig)
+
+
+
 
 
