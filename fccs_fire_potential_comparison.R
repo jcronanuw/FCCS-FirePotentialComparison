@@ -186,143 +186,256 @@ fbsd <- data.frame(fuelbed = fbsc$fuelbed, andreu_fuelbed_no = fbsc$andreu_fuelb
 ##############################################################################################################
 ##############################################################################################################
 #STEP 4: 
-#NATURAL FUELS FOR NATURAL FUELBEDS ACROSS ALL TOPOGRAPHIC POSITIONS.
+#CREATE FUNCTIONS FOR GRAPHICS
 
-#Subset wet flatlands fuelbeds you want to look at
-#Wet Flatlands
-wet_flatlands <- fbsd[fbsd$fuelbed %in% c(1011101:1011106, 
-                                  1011201:1011206, 
-                                  1011301:1011306, 
-                                  1031401:1031406),]
-wet_flatlands <- wet_flatlands[order(wet_flatlands$fuelbed),]
-
-#Mesic Flatlands
-mesic_flatlands <- fbsd[fbsd$fuelbed %in% c(2011101:2011106, 
-                                  2011201:2011206, 
-                                  2011301:2011306, 
-                                  2031401:2031406),]
-mesic_flatlands <- mesic_flatlands[order(mesic_flatlands$fuelbed),]
-
-#Mesic Uplands
-mesic_uplands <- fbsd[fbsd$fuelbed %in% c(3011101:3011106, 
-                                  3011201:3011206, 
-                                  3011301:3011306, 
-                                  3031401:3031406),]
-mesic_uplands <- mesic_uplands[order(mesic_uplands$fuelbed),]
-
-#Xeric Uplands
-xeric_uplands <- fbsd[fbsd$fuelbed %in% c(4011101:4011106, 
-                                  4011201:4011206, 
-                                  4011301:4011306, 
-                                  4031401:4031406),]
-xeric_uplands <- xeric_uplands[order(xeric_uplands$fuelbed),]
-
-#I'm starting with a subset of natural fuels and organizing by mean fire return intervals with stand 
-#age nested in each mfri group. The predictions from Eglin staff should show a decrease in PIG as mfri 
-#lengthens due to less grass/longleaf litter and higher fine fuel moisture. The Eglin staff predictions 
-#increase with stand age for frequently burned fuel types as canopy and development of wiregrass 
-#contributes to flammable fine fuels on the forest floor.
-
+#Create a function for a 1-panel bar chart
+x1plot <- function(a,x,z)
+{
+  
 #Column number of fuelbed parameter you want to look at
-type <-5 #5 = Eglin staff predictions for probability of ignition.
+type <-x #5 = Eglin staff predictions for probability of ignition.
+
+#Font size for all text in plot
+font <- 0.7
+mult <- 1
+
+#Colors from yellow to red for fire frequency (high to low)
+colors_fr <- c("grey", "yellow", "orange", "red", "dark red")
+
+#Plot 1
+par(cex = font*mult)
+xx_acat <- barplot(a[,type], a$fuelbed, 
+                   col = mapply(function(y) colors_fr[y+1], 
+                                a$mfri), 
+                   names.arg = NULL, 
+                   main = paste(z, 
+                                names(a)[type], 
+                                sep = " "), 
+                   ylim = c(0, max(a[,type])))
+
+vps <- baseViewports()
+pushViewport(vps$inner, vps$figure, vps$plot)
+
+grid.text(as.character(a$fuelbed),
+          x = unit(xx_acat, "native"), y=unit(-1, "lines"),
+          just="right", rot=50, gp = gpar(cex = font))
+popViewport(3)
+}
+
+#Create a function for a 2-panel bar chart
+x2plot <- function(a,b,x,z)
+{
+  
+#Column number of fuelbed parameter you want to look at
+type <-x #5 = Eglin staff predictions for probability of ignition.
 
 #Font size for all text in plot
 font <- 0.7
 mult <- 1
 
 #Layout panels
-nf <- layout(matrix(c(1,2,3,4), 2, 2, byrow = TRUE))
+nf <- layout(matrix(c(1,2), 2, 1, byrow = TRUE))
 layout.show(nf)
 
-#Colors from yellow to red for fire frequency (high to low)
-colors_fr <- c("grey", "yellow", "orange", "red", "dark red")
-
-#Wet Flatlands
-par(cex = font*mult)
-wf_cat <- barplot(wet_flatlands[,type], wet_flatlands$fuelbed, 
+#Plot 1
+x1_cat <- barplot(a[,type], a$fuelbed, 
                   col = mapply(function(y) colors_fr[y+1], 
-                               wet_flatlands$mfri), 
+                               a$mfri), 
                   names.arg = NULL, 
-                  main = paste("Wet Flatlands", 
-                               names(wet_flatlands)[type], 
+                  main = paste(z[1], 
+                               names(a)[type], 
                                sep = " "), 
-                  ylim = c(0, max(wet_flatlands[,type], 
-                                  mesic_flatlands[,type], 
-                                  mesic_uplands[,type], 
-                                  xeric_uplands[,type])))
+                  ylim = c(0, max(a[,type], 
+                                  b[,type])))
 
 vps <- baseViewports()
 pushViewport(vps$inner, vps$figure, vps$plot)
 
-grid.text(as.character(wet_flatlands$fuelbed),
-          x = unit(wf_cat, "native"), y=unit(-1, "lines"),
+grid.text(as.character(a$fuelbed),
+          x = unit(x1_cat, "native"), y=unit(-1, "lines"),
           just="right", rot=50, gp = gpar(cex = font))
 popViewport(3)
 
-#Mesic Flatlands
-mf_cat <- barplot(mesic_flatlands[,type], mesic_flatlands$fuelbed, 
+#Plot 2
+x2_cat <- barplot(b[,type], b$fuelbed, 
                   col = mapply(function(y) colors_fr[y+1], 
-                               mesic_flatlands$mfri), 
+                               b$mfri), 
                   names.arg = NULL, 
-                  main = paste("Mesic Flatlands", 
-                               names(mesic_flatlands)[type], 
+                  main = paste(z[2], 
+                               names(b)[type], 
                                sep = " "), 
-                  ylim = c(0, max(wet_flatlands[,type], 
-                                  mesic_flatlands[,type], 
-                                  mesic_uplands[,type], 
-                                  xeric_uplands[,type])))
+                  ylim = c(0, max(a[,type], 
+                                  b[,type])))
 
 vps <- baseViewports()
 pushViewport(vps$inner, vps$figure, vps$plot)
 
 
-grid.text(as.character(mesic_flatlands$fuelbed),
-          x = unit(mf_cat, "native"), y=unit(-1, "lines"),
+grid.text(as.character(b$fuelbed),
+          x = unit(x2_cat, "native"), y=unit(-1, "lines"),
           just="right", rot=50, gp = gpar(cex = font))
 popViewport(3)
+}
 
-#Mesic Uplands
-mu_cat <- barplot(mesic_uplands[,type], mesic_uplands$fuelbed, 
-                  col = mapply(function(y) colors_fr[y+1], 
-                               mesic_uplands$mfri), 
-                  names.arg = NULL, 
-                  main = paste("Mesic Uplands", 
-                               names(mesic_uplands)[type], 
-                               sep = " "), 
-                  ylim = c(0, max(wet_flatlands[,type], 
-                                  mesic_flatlands[,type], 
-                                  mesic_uplands[,type], 
-                                  xeric_uplands[,type])))
+#Create a function for a 4-panel bar chart
+x4plot <- function(a,b,c,d,x,z)
+{
+  
+  #Column number of fuelbed parameter you want to look at
+  type <-x #5 = Eglin staff predictions for probability of ignition.
+  
+  #Font size for all text in plot
+  font <- 0.7
+  mult <- 1
+  
+  #Layout panels
+  nf <- layout(matrix(c(1,2,3,4), 2, 2, byrow = TRUE))
+  layout.show(nf)
+  
+  #Colors from yellow to red for fire frequency (high to low)
+  colors_fr <- c("grey", "yellow", "orange", "red", "dark red")
+  
+  #Upper Lefty
+  par(cex = font*mult)
+  wf_cat <- barplot(a[,type], a$fuelbed, 
+                    col = mapply(function(y) colors_fr[y+1], 
+                                 a$mfri), 
+                    names.arg = NULL, 
+                    main = paste(z[1], 
+                                 names(a)[type], 
+                                 sep = " "), 
+                    ylim = c(0, max(a[,type], 
+                                    b[,type], 
+                                    c[,type], 
+                                    xeric_uplands[,type])))
+  
+  vps <- baseViewports()
+  pushViewport(vps$inner, vps$figure, vps$plot)
+  
+  grid.text(as.character(a$fuelbed),
+            x = unit(wf_cat, "native"), y=unit(-1, "lines"),
+            just="right", rot=50, gp = gpar(cex = font))
+  popViewport(3)
+  
+  #Upper Right
+  mf_cat <- barplot(b[,type], b$fuelbed, 
+                    col = mapply(function(y) colors_fr[y+1], 
+                                 b$mfri), 
+                    names.arg = NULL, 
+                    main = paste(z[2], 
+                                 names(b)[type], 
+                                 sep = " "), 
+                    ylim = c(0, max(a[,type], 
+                                    b[,type], 
+                                    c[,type], 
+                                    d[,type])))
+  
+  vps <- baseViewports()
+  pushViewport(vps$inner, vps$figure, vps$plot)
+  
+  
+  grid.text(as.character(b$fuelbed),
+            x = unit(mf_cat, "native"), y=unit(-1, "lines"),
+            just="right", rot=50, gp = gpar(cex = font))
+  popViewport(3)
+  
+  #Lower Left
+  mu_cat <- barplot(c[,type], c$fuelbed, 
+                    col = mapply(function(y) colors_fr[y+1], 
+                                 c$mfri), 
+                    names.arg = NULL, 
+                    main = paste(z[3], 
+                                 names(c)[type], 
+                                 sep = " "), 
+                    ylim = c(0, max(a[,type], 
+                                    b[,type], 
+                                    c[,type], 
+                                    d[,type])))
+  
+  vps <- baseViewports()
+  pushViewport(vps$inner, vps$figure, vps$plot)
+  
+  grid.text(as.character(c$fuelbed),
+            x = unit(mu_cat, "native"), y=unit(-1, "lines"),
+            just="right", rot=50, gp = gpar(cex = font))
+  popViewport(3)
+  
+  #Lower Right
+  xu_cat <- barplot(d[,type], d$fuelbed, 
+                    col = mapply(function(y) colors_fr[y+1], 
+                                 d$mfri), 
+                    names.arg = NULL, 
+                    main = paste(z[4], 
+                                 names(d)[type], 
+                                 sep = " "), 
+                    ylim = c(0, max(a[,type], 
+                                    b[,type], 
+                                    c[,type], 
+                                    d[,type])))
+  
+  vps <- baseViewports()
+  pushViewport(vps$inner, vps$figure, vps$plot)
+  
+  
+  grid.text(as.character(d$fuelbed),
+            x = unit(xu_cat, "native"), y=unit(-1, "lines"),
+            just="right", rot=50, gp = gpar(cex = font))
+  popViewport(3)
+  }
 
-vps <- baseViewports()
-pushViewport(vps$inner, vps$figure, vps$plot)
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+#STEP 5 
+#NATURAL FUELS FOR NATURAL FUELBEDS ACROSS ALL TOPOGRAPHIC POSITIONS.
+dev.off()
 
-grid.text(as.character(mesic_uplands$fuelbed),
-          x = unit(mu_cat, "native"), y=unit(-1, "lines"),
-          just="right", rot=50, gp = gpar(cex = font))
-popViewport(3)
+#Object to handle title names
+plotTitle <- vector()
 
-#Xeric Uplands
-xu_cat <- barplot(xeric_uplands[,type], xeric_uplands$fuelbed, 
-                  col = mapply(function(y) colors_fr[y+1], 
-                               xeric_uplands$mfri), 
-                  names.arg = NULL, 
-                  main = paste("Xeric Uplands", 
-                               names(xeric_uplands)[type], 
-                               sep = " "), 
-                  ylim = c(0, max(wet_flatlands[,type], 
-                                  mesic_flatlands[,type], 
-                                  mesic_uplands[,type], 
-                                  xeric_uplands[,type])))
+#Subset wet flatlands fuelbeds you want to look at
+plotTitle[1] <- "Wet Flatlands"
+wet_flatlands <- fbsd[fbsd$fuelbed %in% c(1011101:1011106, 
+                                          1011201:1011206, 
+                                          1011301:1011306, 
+                                          1031401:1031406),]
+wet_flatlands <- wet_flatlands[order(wet_flatlands$fuelbed),]
 
-vps <- baseViewports()
-pushViewport(vps$inner, vps$figure, vps$plot)
+plotTitle[2] <- "Mesic Flatlands"
+mesic_flatlands <- fbsd[fbsd$fuelbed %in% c(2011101:2011106, 
+                                            2011201:2011206, 
+                                            2011301:2011306, 
+                                            2031401:2031406),]
+mesic_flatlands <- mesic_flatlands[order(mesic_flatlands$fuelbed),]
+
+plotTitle[3] <- "Mesic Uplands"
+mesic_uplands <- fbsd[fbsd$fuelbed %in% c(3011101:3011106, 
+                                          3011201:3011206, 
+                                          3011301:3011306, 
+                                          3031401:3031406),]
+mesic_uplands <- mesic_uplands[order(mesic_uplands$fuelbed),]
+
+plotTitle[4] <- "Xeric Uplands"
+xeric_uplands <- fbsd[fbsd$fuelbed %in% c(4011101:4011106, 
+                                          4011201:4011206, 
+                                          4011301:4011306, 
+                                          4031401:4031406),]
+xeric_uplands <- xeric_uplands[order(xeric_uplands$fuelbed),]
 
 
-grid.text(as.character(xeric_uplands$fuelbed),
-          x = unit(xu_cat, "native"), y=unit(-1, "lines"),
-          just="right", rot=50, gp = gpar(cex = font))
-popViewport(3)
+
+#I'm starting with a subset of natural fuels and organizing by mean fire return intervals with stand 
+#age nested in each mfri group. The predictions from Eglin staff should show a decrease in PIG as mfri 
+#lengthens due to less grass/longleaf litter and higher fine fuel moisture. The Eglin staff predictions 
+#increase with stand age for frequently burned fuel types as canopy and development of wiregrass 
+#contributes to flammable fine fuels on the forest floor.
+#5 = Eglin staff predictions for probability of ignition.
+x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 5, plotTitle)
 
 #As we can see in the output there is the expected trend across mfri, but not
 #stand age. This is likely due to the fact that you did not put a lot of effort into
@@ -332,41 +445,16 @@ popViewport(3)
 
 ##############################################################################################################
 ##############################################################################################################
-#STEP 5: 
+#STEP 6: 
 #ALL NATURAL FUELBEDS IN WET FLATLANDS.
+dev.off()
 
 #Subset all natural fuelbeds in wet flatlands
+plotTitle <- "Wet Flatlands -- Natural Fuelbeds"
 wet_flatlands <- fbsd[fbsd$topo == 1 & fbsd$treatment == 1,]
 
-#Column number of fuelbed parameter you want to look at
-type <-5 #5 = Eglin staff predictions for probability of ignition.
-
-#Font size for all text in plot
-font <- 0.7
-mult <- 1
-
-#Colors from yellow to red for fire frequency (high to low)
-colors_fr <- c("grey", "yellow", "orange", "red", "dark red")
-
-#Wet Flatlands
-par(cex = font*mult)
-wf_acat <- barplot(wet_flatlands[,type], wet_flatlands$fuelbed, 
-                  col = mapply(function(y) colors_fr[y+1], 
-                               wet_flatlands$mfri), 
-                  names.arg = NULL, 
-                  main = paste("Wet Flatlands", 
-                               names(wet_flatlands)[type], 
-                               sep = " "), 
-                  ylim = c(0, max(wet_flatlands[,type])))
-
-vps <- baseViewports()
-pushViewport(vps$inner, vps$figure, vps$plot)
-
-grid.text(as.character(wet_flatlands$fuelbed),
-          x = unit(wf_acat, "native"), y=unit(-1, "lines"),
-          just="right", rot=50, gp = gpar(cex = font))
-popViewport(3)
-
+x1plot(wet_flatlands, 5, plotTitle)
+  
 #As we can see in the output there is the expected trend across mfri, but not
 #stand age. This is likely due to the fact that you did not put a lot of effort into
 #setting up the initial PIG values in sef_lut_all.csv.
@@ -375,40 +463,15 @@ popViewport(3)
 
 ##############################################################################################################
 ##############################################################################################################
-#STEP 6: 
+#STEP 7: 
 #ALL NATURAL FUELBEDS IN MESIC FLATLANDS.
+dev.off()
 
 #Subset all natural fuelbeds in mesic flatlands
+plotTitle <- "Mesic Flatlands -- Natural Fuelbeds"
 mesic_flatlands <- fbsd[fbsd$topo == 2 & fbsd$treatment == 1,]
 
-#Column number of fuelbed parameter you want to look at
-type <-5 #5 = Eglin staff predictions for probability of ignition.
-
-#Font size for all text in plot
-font <- 0.7
-mult <- 1
-
-#Colors from yellow to red for fire frequency (high to low)
-colors_fr <- c("grey", "yellow", "orange", "red", "dark red")
-
-#Wet Flatlands
-par(cex = font*mult)
-wf_acat <- barplot(mesic_flatlands[,type], mesic_flatlands$fuelbed, 
-                   col = mapply(function(y) colors_fr[y+1], 
-                                mesic_flatlands$mfri), 
-                   names.arg = NULL, 
-                   main = paste("Mesic Flatlands", 
-                                names(mesic_flatlands)[type], 
-                                sep = " "), 
-                   ylim = c(0, max(mesic_flatlands[,type])))
-
-vps <- baseViewports()
-pushViewport(vps$inner, vps$figure, vps$plot)
-
-grid.text(as.character(mesic_flatlands$fuelbed),
-          x = unit(wf_acat, "native"), y=unit(-1, "lines"),
-          just="right", rot=50, gp = gpar(cex = font))
-popViewport(3)
+x1plot(mesic_flatlands, 5, plotTitle)
 
 #As we can see in the output there is the expected trend across mfri, but not
 #stand age. This is likely due to the fact that you did not put a lot of effort into
@@ -418,40 +481,15 @@ popViewport(3)
 
 ##############################################################################################################
 ##############################################################################################################
-#STEP 7: 
+#STEP 8: 
 #ALL NATURAL FUELBEDS IN MESIC UPLANDS.
+dev.off()
 
 #Subset all natural fuelbeds in mesic uplands
+plotTitle <- "Mesic Uplands -- Natural Fuelbeds"
 mesic_uplands <- fbsd[fbsd$topo == 3 & fbsd$treatment == 1,]
 
-#Column number of fuelbed parameter you want to look at
-type <-5 #5 = Eglin staff predictions for probability of ignition.
-
-#Font size for all text in plot
-font <- 0.7
-mult <- 1
-
-#Colors from yellow to red for fire frequency (high to low)
-colors_fr <- c("grey", "yellow", "orange", "red", "dark red")
-
-#Wet Flatlands
-par(cex = font*mult)
-wf_acat <- barplot(mesic_uplands[,type], mesic_uplands$fuelbed, 
-                   col = mapply(function(y) colors_fr[y+1], 
-                                mesic_uplands$mfri), 
-                   names.arg = NULL, 
-                   main = paste("Mesic Uplands", 
-                                names(mesic_uplands)[type], 
-                                sep = " "), 
-                   ylim = c(0, max(mesic_uplands[,type])))
-
-vps <- baseViewports()
-pushViewport(vps$inner, vps$figure, vps$plot)
-
-grid.text(as.character(mesic_uplands$fuelbed),
-          x = unit(wf_acat, "native"), y=unit(-1, "lines"),
-          just="right", rot=50, gp = gpar(cex = font))
-popViewport(3)
+x1plot(mesic_uplands, 5, plotTitle)
 
 #As we can see in the output there is the expected trend across mfri, but not
 #stand age. This is likely due to the fact that you did not put a lot of effort into
@@ -461,40 +499,14 @@ popViewport(3)
 
 ##############################################################################################################
 ##############################################################################################################
-#STEP 8: 
+#STEP 9: 
 #ALL NATURAL FUELBEDS IN XERIC UPLANDS.
 
 #Subset all natural fuelbeds in xeric uplands
+plotTitle <- "Xeric Uplands -- Natural Fuelbeds"
 xeric_uplands <- fbsd[fbsd$topo == 4 & fbsd$treatment == 1,]
 
-#Column number of fuelbed parameter you want to look at
-type <-5 #5 = Eglin staff predictions for probability of ignition.
-
-#Font size for all text in plot
-font <- 0.7
-mult <- 1
-
-#Colors from yellow to red for fire frequency (high to low)
-colors_fr <- c("grey", "yellow", "orange", "red", "dark red")
-
-#Wet Flatlands
-par(cex = font*mult)
-wf_acat <- barplot(xeric_uplands[,type], xeric_uplands$fuelbed, 
-                   col = mapply(function(y) colors_fr[y+1], 
-                                xeric_uplands$mfri), 
-                   names.arg = NULL, 
-                   main = paste("Xeric Uplands", 
-                                names(xeric_uplands)[type], 
-                                sep = " "), 
-                   ylim = c(0, max(xeric_uplands[,type])))
-
-vps <- baseViewports()
-pushViewport(vps$inner, vps$figure, vps$plot)
-
-grid.text(as.character(xeric_uplands$fuelbed),
-          x = unit(wf_acat, "native"), y=unit(-1, "lines"),
-          just="right", rot=50, gp = gpar(cex = font))
-popViewport(3)
+x1plot(xeric_uplands, 5, plotTitle)
 
 #As we can see in the output there is the expected trend across mfri, but not
 #stand age. This is likely due to the fact that you did not put a lot of effort into
@@ -504,8 +516,15 @@ popViewport(3)
 
 ##############################################################################################################
 ##############################################################################################################
-#STEP 9: 
+#STEP 10: 
 #ALL PLANTATION FUELBEDS IN ALL TOPOGRAPHIC POSITIONS
+dev.off()
+
+#Object to handle title names
+plotTitle <- c("Wet Flatlands", 
+               "Mesic Flatlands", 
+               "Mesic Uplands", 
+               "Xeric Uplands")
 
 #Subset all plantation fuelbeds by topographic region.
 wet_flatlands <- fbsd[fbsd$topo == 1 & fbsd$treatment == 5,]
@@ -513,106 +532,7 @@ mesic_flatlands <- fbsd[fbsd$topo == 2 & fbsd$treatment == 5,]
 mesic_uplands <- fbsd[fbsd$topo == 3 & fbsd$treatment == 5,]
 xeric_uplands <- fbsd[fbsd$topo == 4 & fbsd$treatment == 5,]
 
-#Column number of fuelbed parameter you want to look at
-type <-5 #5 = Eglin staff predictions for probability of ignition.
-
-#Font size for all text in plot
-font <- 0.7
-mult <- 1
-
-#Layout panels
-nf <- layout(matrix(c(1,2,3,4), 2, 2, byrow = TRUE))
-layout.show(nf)
-
-#Colors from yellow to red for fire frequency (high to low)
-colors_fr <- c("grey", "yellow", "orange", "red", "dark red")
-
-#Wet Flatlands
-par(cex = font*mult)
-wf_cat <- barplot(wet_flatlands[,type], wet_flatlands$fuelbed, 
-                  col = mapply(function(y) colors_fr[y+1], 
-                               wet_flatlands$mfri), 
-                  names.arg = NULL, 
-                  main = paste("Wet Flatlands", 
-                               names(wet_flatlands)[type], 
-                               sep = " "), 
-                  ylim = c(0, max(wet_flatlands[,type], 
-                                  mesic_flatlands[,type], 
-                                  mesic_uplands[,type], 
-                                  xeric_uplands[,type])))
-
-vps <- baseViewports()
-pushViewport(vps$inner, vps$figure, vps$plot)
-
-grid.text(as.character(wet_flatlands$fuelbed),
-          x = unit(wf_cat, "native"), y=unit(-1, "lines"),
-          just="right", rot=50, gp = gpar(cex = font))
-popViewport(3)
-
-#Mesic Flatlands
-mf_cat <- barplot(mesic_flatlands[,type], mesic_flatlands$fuelbed, 
-                  col = mapply(function(y) colors_fr[y+1], 
-                               mesic_flatlands$mfri), 
-                  names.arg = NULL, 
-                  main = paste("Mesic Flatlands", 
-                               names(mesic_flatlands)[type], 
-                               sep = " "), 
-                  ylim = c(0, max(wet_flatlands[,type], 
-                                  mesic_flatlands[,type], 
-                                  mesic_uplands[,type], 
-                                  xeric_uplands[,type])))
-
-vps <- baseViewports()
-pushViewport(vps$inner, vps$figure, vps$plot)
-
-
-grid.text(as.character(mesic_flatlands$fuelbed),
-          x = unit(mf_cat, "native"), y=unit(-1, "lines"),
-          just="right", rot=50, gp = gpar(cex = font))
-popViewport(3)
-
-#Mesic Uplands
-mu_cat <- barplot(mesic_uplands[,type], mesic_uplands$fuelbed, 
-                  col = mapply(function(y) colors_fr[y+1], 
-                               mesic_uplands$mfri), 
-                  names.arg = NULL, 
-                  main = paste("Mesic Uplands", 
-                               names(mesic_uplands)[type], 
-                               sep = " "), 
-                  ylim = c(0, max(wet_flatlands[,type], 
-                                  mesic_flatlands[,type], 
-                                  mesic_uplands[,type], 
-                                  xeric_uplands[,type])))
-
-vps <- baseViewports()
-pushViewport(vps$inner, vps$figure, vps$plot)
-
-grid.text(as.character(mesic_uplands$fuelbed),
-          x = unit(mu_cat, "native"), y=unit(-1, "lines"),
-          just="right", rot=50, gp = gpar(cex = font))
-popViewport(3)
-
-#Xeric Uplands
-xu_cat <- barplot(xeric_uplands[,type], xeric_uplands$fuelbed, 
-                  col = mapply(function(y) colors_fr[y+1], 
-                               xeric_uplands$mfri), 
-                  names.arg = NULL, 
-                  main = paste("Xeric Uplands", 
-                               names(xeric_uplands)[type], 
-                               sep = " "), 
-                  ylim = c(0, max(wet_flatlands[,type], 
-                                  mesic_flatlands[,type], 
-                                  mesic_uplands[,type], 
-                                  xeric_uplands[,type])))
-
-vps <- baseViewports()
-pushViewport(vps$inner, vps$figure, vps$plot)
-
-
-grid.text(as.character(xeric_uplands$fuelbed),
-          x = unit(xu_cat, "native"), y=unit(-1, "lines"),
-          just="right", rot=50, gp = gpar(cex = font))
-popViewport(3)
+x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 5, plotTitle)
 
 #As we can see in the output there is the expected trend across mfri, but not
 #stand age. This is likely due to the fact that you did not put a lot of effort into
@@ -622,68 +542,20 @@ popViewport(3)
 
 ##############################################################################################################
 ##############################################################################################################
-#STEP 10: 
+#STEP 11: 
 #ALL RESTORATION FUELBEDS IN ALL NATURAL FUELBEDS FOR ALL TOPOGRAPHIC POSITIONS.
+dev.off()
+
+#Object to handle title names
+plotTitle <- c("Mesic Uplands", 
+               "Xeric Uplands")
 
 #Subset restoration fuelbeds derived from natural fuels by topographic position
 #Note ---- there are no restoration fuelbeds in wet or mesic flatlands.
 mesic_uplands <- fbsd[fbsd$topo == 3 & fbsd$treatment %in% c(2,3,4),]
 xeric_uplands <- fbsd[fbsd$topo == 4 & fbsd$treatment %in% c(2,3,4),]
 
-#Column number of fuelbed parameter you want to look at
-type <-5 #5 = Eglin staff predictions for probability of ignition.
-
-#Font size for all text in plot
-font <- 0.7
-mult <- 1
-
-#Layout panels
-dev.off()
-nf <- layout(matrix(c(1,2), 2, 1, byrow = TRUE))
-layout.show(nf)
-
-#Mesic Uplands
-mu_cat <- barplot(mesic_uplands[,type], mesic_uplands$fuelbed, 
-                  col = mapply(function(y) colors_fr[y+1], 
-                               mesic_uplands$mfri), 
-                  names.arg = NULL, 
-                  main = paste("Mesic Uplands", 
-                               names(mesic_uplands)[type], 
-                               sep = " "), 
-                  ylim = c(0, max(wet_flatlands[,type], 
-                                  mesic_flatlands[,type], 
-                                  mesic_uplands[,type], 
-                                  xeric_uplands[,type])))
-
-vps <- baseViewports()
-pushViewport(vps$inner, vps$figure, vps$plot)
-
-grid.text(as.character(mesic_uplands$fuelbed),
-          x = unit(mu_cat, "native"), y=unit(-1, "lines"),
-          just="right", rot=50, gp = gpar(cex = font))
-popViewport(3)
-
-#Xeric Uplands
-xu_cat <- barplot(xeric_uplands[,type], xeric_uplands$fuelbed, 
-                  col = mapply(function(y) colors_fr[y+1], 
-                               xeric_uplands$mfri), 
-                  names.arg = NULL, 
-                  main = paste("Xeric Uplands", 
-                               names(xeric_uplands)[type], 
-                               sep = " "), 
-                  ylim = c(0, max(wet_flatlands[,type], 
-                                  mesic_flatlands[,type], 
-                                  mesic_uplands[,type], 
-                                  xeric_uplands[,type])))
-
-vps <- baseViewports()
-pushViewport(vps$inner, vps$figure, vps$plot)
-
-
-grid.text(as.character(xeric_uplands$fuelbed),
-          x = unit(xu_cat, "native"), y=unit(-1, "lines"),
-          just="right", rot=50, gp = gpar(cex = font))
-popViewport(3)
+x2plot(mesic_uplands, xeric_uplands, 5, plotTitle)
 
 #Trends are not quite as expected.
 #1) Post-thinning should have low PIGs >> they are too high
@@ -697,68 +569,19 @@ popViewport(3)
 
 #############################################################################################################
 ##############################################################################################################
-#STEP 11: 
+#STEP 12: 
 #ALL RESTORATION FUELBEDS IN ALL PLANTATION FOR ALL TOPOGRAPHIC POSITIONS.
+
+#Object to handle title names
+plotTitle <- c("Mesic Uplands", 
+               "Xeric Uplands")
 
 #Subset restoration fuelbeds derived from plantations.
 #Note ---- there are no restoration fuelbeds in wet or mesic flatlands.
 mesic_uplands <- fbsd[fbsd$topo == 3 & fbsd$treatment %in% c(6,7,8),]
 xeric_uplands <- fbsd[fbsd$topo == 4 & fbsd$treatment %in% c(6,7,8),]
 
-#Column number of fuelbed parameter you want to look at
-type <-5 #5 = Eglin staff predictions for probability of ignition.
-
-#Font size for all text in plot
-font <- 0.7
-mult <- 1
-
-#Layout panels
-dev.off()
-nf <- layout(matrix(c(1,2), 2, 1, byrow = TRUE))
-layout.show(nf)
-
-#Mesic Uplands
-mu_cat <- barplot(mesic_uplands[,type], mesic_uplands$fuelbed, 
-                  col = mapply(function(y) colors_fr[y+1], 
-                               mesic_uplands$mfri), 
-                  names.arg = NULL, 
-                  main = paste("Mesic Uplands", 
-                               names(mesic_uplands)[type], 
-                               sep = " "), 
-                  ylim = c(0, max(wet_flatlands[,type], 
-                                  mesic_flatlands[,type], 
-                                  mesic_uplands[,type], 
-                                  xeric_uplands[,type])))
-
-vps <- baseViewports()
-pushViewport(vps$inner, vps$figure, vps$plot)
-
-grid.text(as.character(mesic_uplands$fuelbed),
-          x = unit(mu_cat, "native"), y=unit(-1, "lines"),
-          just="right", rot=50, gp = gpar(cex = font))
-popViewport(3)
-
-#Xeric Uplands
-xu_cat <- barplot(xeric_uplands[,type], xeric_uplands$fuelbed, 
-                  col = mapply(function(y) colors_fr[y+1], 
-                               xeric_uplands$mfri), 
-                  names.arg = NULL, 
-                  main = paste("Xeric Uplands", 
-                               names(xeric_uplands)[type], 
-                               sep = " "), 
-                  ylim = c(0, max(wet_flatlands[,type], 
-                                  mesic_flatlands[,type], 
-                                  mesic_uplands[,type], 
-                                  xeric_uplands[,type])))
-
-vps <- baseViewports()
-pushViewport(vps$inner, vps$figure, vps$plot)
-
-
-grid.text(as.character(xeric_uplands$fuelbed),
-          x = unit(xu_cat, "native"), y=unit(-1, "lines"),
-          just="right", rot=50, gp = gpar(cex = font))
-popViewport(3)
+x2plot(mesic_uplands, xeric_uplands, 5, plotTitle)
 
 #Trends are not quite as expected.
 #1) Post-thinning should have low PIGs >> they are too high
@@ -769,7 +592,7 @@ popViewport(3)
 
 #############################################################################################################
 ##############################################################################################################
-#STEP 12: 
+#STEP 13: 
 #CONCLUSIONS
 #The idealized "expert opnion" PIGs you coded into the FDM input file is overly simplistic. Probably because
 #you developed this quickly as a way to test early versions of FDM. You cannot use these values to compare
@@ -886,8 +709,14 @@ fbsd <- data.frame(fuelbed = fbsc$fuelbed, andreu_fuelbed_no = fbsc$andreu_fuelb
 
 ##############################################################################################################
 ##############################################################################################################
-#STEP 13: 
+#STEP 14: 
 #SELECTED NATURAL FUELS FOR NATURAL FUELBEDS ACROSS ALL TOPOGRAPHIC POSITIONS.
+
+#Object to handle title names
+plotTitle <- c("Wet Flatlands", 
+               "Mesic Flatlands", 
+               "Mesic Uplands", 
+               "Xeric Uplands")
 
 #Subset selected natural fuelbeds by topographic position.
 #Wet Flatlands
@@ -918,149 +747,28 @@ xeric_uplands <- fbsd[fbsd$fuelbed %in% c(4011101:4011106,
                                           4031401:4031406),]
 xeric_uplands <- xeric_uplands[order(xeric_uplands$fuelbed),]
 
-#Column number of fuelbed parameter you want to look at
-type <-5 #5 = Eglin staff predictions for probability of ignition.
-
-#Font size for all text in plot
-font <- 0.7
-mult <- 1
-
-#Layout panels
-nf <- layout(matrix(c(1,2,3,4), 2, 2, byrow = TRUE))
-layout.show(nf)
-
-#Colors from yellow to red for fire frequency (high to low)
-colors_fr <- c("grey", "yellow", "orange", "red", "dark red")
-
-#Wet Flatlands
-par(cex = font*mult)
-wf_cat <- barplot(wet_flatlands[,type], wet_flatlands$fuelbed, 
-                  col = mapply(function(y) colors_fr[y+1], 
-                               wet_flatlands$mfri), 
-                  names.arg = NULL, 
-                  main = paste("Wet Flatlands", 
-                               names(wet_flatlands)[type], 
-                               sep = " "), 
-                  ylim = c(0, max(wet_flatlands[,type], 
-                                  mesic_flatlands[,type], 
-                                  mesic_uplands[,type], 
-                                  xeric_uplands[,type])))
-
-vps <- baseViewports()
-pushViewport(vps$inner, vps$figure, vps$plot)
-
-grid.text(as.character(wet_flatlands$fuelbed),
-          x = unit(wf_cat, "native"), y=unit(-1, "lines"),
-          just="right", rot=50, gp = gpar(cex = font))
-popViewport(3)
-
-#Mesic Flatlands
-mf_cat <- barplot(mesic_flatlands[,type], mesic_flatlands$fuelbed, 
-                  col = mapply(function(y) colors_fr[y+1], 
-                               mesic_flatlands$mfri), 
-                  names.arg = NULL, 
-                  main = paste("Mesic Flatlands", 
-                               names(mesic_flatlands)[type], 
-                               sep = " "), 
-                  ylim = c(0, max(wet_flatlands[,type], 
-                                  mesic_flatlands[,type], 
-                                  mesic_uplands[,type], 
-                                  xeric_uplands[,type])))
-
-vps <- baseViewports()
-pushViewport(vps$inner, vps$figure, vps$plot)
+#ALL PLANTATION FUELBEDS IN ALL TOPOGRAPHIC POSITIONS
+dev.off()
+x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 5, plotTitle)
 
 
-grid.text(as.character(mesic_flatlands$fuelbed),
-          x = unit(mf_cat, "native"), y=unit(-1, "lines"),
-          just="right", rot=50, gp = gpar(cex = font))
-popViewport(3)
-
-#Mesic Uplands
-mu_cat <- barplot(mesic_uplands[,type], mesic_uplands$fuelbed, 
-                  col = mapply(function(y) colors_fr[y+1], 
-                               mesic_uplands$mfri), 
-                  names.arg = NULL, 
-                  main = paste("Mesic Uplands", 
-                               names(mesic_uplands)[type], 
-                               sep = " "), 
-                  ylim = c(0, max(wet_flatlands[,type], 
-                                  mesic_flatlands[,type], 
-                                  mesic_uplands[,type], 
-                                  xeric_uplands[,type])))
-
-vps <- baseViewports()
-pushViewport(vps$inner, vps$figure, vps$plot)
-
-grid.text(as.character(mesic_uplands$fuelbed),
-          x = unit(mu_cat, "native"), y=unit(-1, "lines"),
-          just="right", rot=50, gp = gpar(cex = font))
-popViewport(3)
-
-#Xeric Uplands
-xu_cat <- barplot(xeric_uplands[,type], xeric_uplands$fuelbed, 
-                  col = mapply(function(y) colors_fr[y+1], 
-                               xeric_uplands$mfri), 
-                  names.arg = NULL, 
-                  main = paste("Xeric Uplands", 
-                               names(xeric_uplands)[type], 
-                               sep = " "), 
-                  ylim = c(0, max(wet_flatlands[,type], 
-                                  mesic_flatlands[,type], 
-                                  mesic_uplands[,type], 
-                                  xeric_uplands[,type])))
-
-vps <- baseViewports()
-pushViewport(vps$inner, vps$figure, vps$plot)
-
-
-grid.text(as.character(xeric_uplands$fuelbed),
-          x = unit(xu_cat, "native"), y=unit(-1, "lines"),
-          just="right", rot=50, gp = gpar(cex = font))
-popViewport(3)
-
-#This output is much better than the first itteration (step 4).
-#As in step 4, there is the expected declining PIG as mfri lengthens, but there is also
+#This output is much better than the first itteration (step 5).
+#As in step 5, there is the expected declining PIG as mfri lengthens, but there is also
 #the expected low PIG in young stands.
 
 #NEXT STEP, LOOK AT WIDER RANGE OF FUELBEDS IN EACH TOPOGRAPHIC POSITION; START WITH WET FLATLANDS
 
 ##############################################################################################################
 ##############################################################################################################
-#STEP 14: 
+#STEP 15: 
 #ALL NATURAL FUELBEDS IN WET FLATLANDS.
 
-#Subset all natural fuelbeds in wet flatlands fuelbeds.
+#Subset all natural fuelbeds in mesic uplands
+plotTitle <- "Wet Flatlands -- Natural Fuelbeds"
 wet_flatlands <- fbsd[fbsd$topo == 1 & fbsd$treatment == 1,]
 
-#Column number of fuelbed parameter you want to look at
-type <-5 #5 = Eglin staff predictions for probability of ignition.
-
-#Font size for all text in plot
-font <- 0.7
-mult <- 1
-
-#Colors from yellow to red for fire frequency (high to low)
-colors_fr <- c("grey", "yellow", "orange", "red", "dark red")
-
-#Wet Flatlands
-par(cex = font*mult)
-wf_acat <- barplot(wet_flatlands[,type], wet_flatlands$fuelbed, 
-                   col = mapply(function(y) colors_fr[y+1], 
-                                wet_flatlands$mfri), 
-                   names.arg = NULL, 
-                   main = paste("Wet Flatlands", 
-                                names(wet_flatlands)[type], 
-                                sep = " "), 
-                   ylim = c(0, max(wet_flatlands[,type])))
-
-vps <- baseViewports()
-pushViewport(vps$inner, vps$figure, vps$plot)
-
-grid.text(as.character(wet_flatlands$fuelbed),
-          x = unit(wf_acat, "native"), y=unit(-1, "lines"),
-          just="right", rot=50, gp = gpar(cex = font))
-popViewport(3)
+dev.off()
+x1plot(wet_flatlands, 5, plotTitle)
 
 #This output is much better than the first iteration (step 5).
 #As in step 5, there is the expected declining PIG as mfri lengthens, but there is also
@@ -1070,136 +778,73 @@ popViewport(3)
 
 ##############################################################################################################
 ##############################################################################################################
-#STEP 15: 
+#STEP 16: 
 #ALL NATURAL FUELBEDS IN MESIC FLATLANDS.
 
 #Subset all natural fuelbeds for mesic flatlands
+plotTitle <- "Mesic Flatlands -- Natural Fuelbeds"
 mesic_flatlands <- fbsd[fbsd$topo == 2 & fbsd$treatment == 1,]
 
-#Column number of fuelbed parameter you want to look at
-type <-5 #5 = Eglin staff predictions for probability of ignition.
+dev.off()
+x1plot(mesic_flatlands, 5, plotTitle)
 
-#Font size for all text in plot
-font <- 0.7
-mult <- 1
-
-#Colors from yellow to red for fire frequency (high to low)
-colors_fr <- c("grey", "yellow", "orange", "red", "dark red")
-
-#Wet Flatlands
-par(cex = font*mult)
-wf_acat <- barplot(mesic_flatlands[,type], mesic_flatlands$fuelbed, 
-                   col = mapply(function(y) colors_fr[y+1], 
-                                mesic_flatlands$mfri), 
-                   names.arg = NULL, 
-                   main = paste("Mesic Flatlands", 
-                                names(mesic_flatlands)[type], 
-                                sep = " "), 
-                   ylim = c(0, max(mesic_flatlands[,type])))
-
-vps <- baseViewports()
-pushViewport(vps$inner, vps$figure, vps$plot)
-
-grid.text(as.character(mesic_flatlands$fuelbed),
-          x = unit(wf_acat, "native"), y=unit(-1, "lines"),
-          just="right", rot=50, gp = gpar(cex = font))
-popViewport(3)
-
-#This output is much better than the first iteration (step 6).
-#As in step 6, there is the expected declining PIG as mfri lengthens, but there is also
+#This output is much better than the first iteration (step 7).
+#As in step 7, there is the expected declining PIG as mfri lengthens, but there is also
 #the expected low PIG in young stands.
 
 #NEXT STEP, LOOK AT WIDER RANGE OF FUELBEDS IN MESIC UPLANDS
 
 ##############################################################################################################
 ##############################################################################################################
-#STEP 16: 
+#STEP 17: 
 #ALL NATURAL FUELBEDS IN MESIC UPLANDS.
 
 #Subset all natural fuelbeds for mesic uplands
+plotTitle <- "Mesic Uplands -- Natural Fuelbeds"
 mesic_uplands <- fbsd[fbsd$topo == 3 & fbsd$treatment == 1,]
 
-#Column number of fuelbed parameter you want to look at
-type <-5 #5 = Eglin staff predictions for probability of ignition.
+dev.off()
+x1plot(mesic_uplands, 5, plotTitle)
 
-#Font size for all text in plot
-font <- 0.7
-mult <- 1
-
-#Colors from yellow to red for fire frequency (high to low)
-colors_fr <- c("grey", "yellow", "orange", "red", "dark red")
-
-#Wet Flatlands
-par(cex = font*mult)
-wf_acat <- barplot(mesic_uplands[,type], mesic_uplands$fuelbed, 
-                   col = mapply(function(y) colors_fr[y+1], 
-                                mesic_uplands$mfri), 
-                   names.arg = NULL, 
-                   main = paste("Mesic Uplands", 
-                                names(mesic_uplands)[type], 
-                                sep = " "), 
-                   ylim = c(0, max(mesic_uplands[,type])))
-
-vps <- baseViewports()
-pushViewport(vps$inner, vps$figure, vps$plot)
-
-grid.text(as.character(mesic_uplands$fuelbed),
-          x = unit(wf_acat, "native"), y=unit(-1, "lines"),
-          just="right", rot=50, gp = gpar(cex = font))
-popViewport(3)
-
-#This output is much better than the first iteration (step 7).
-#As in step 7, there is the expected declining PIG as mfri lengthens, but there is also
+#This output is much better than the first iteration (step 8).
+#As in step 8, there is the expected declining PIG as mfri lengthens, but there is also
 #the expected low PIG in young stands.
 
 #NEXT STEP, LOOK AT WIDER RANGE OF FUELBEDS IN XERIC UPLANDS
 
 ##############################################################################################################
 ##############################################################################################################
-#STEP 17: 
+#STEP 18: 
 #ALL NATURAL FUELBEDS IN XERIC UPLANDS.
 
 #Subset all natural fuelbeds for xeric uplands
+plotTitle <- "Xeric Uplands -- Natural Fuelbeds"
 xeric_uplands <- fbsd[fbsd$topo == 4 & fbsd$treatment == 1,]
 
 #Column number of fuelbed parameter you want to look at
 type <-5 #5 = Eglin staff predictions for probability of ignition.
 
-#Font size for all text in plot
-font <- 0.7
-mult <- 1
+dev.off()
+x1plot(xeric_uplands, 5, plotTitle)
 
-#Colors from yellow to red for fire frequency (high to low)
-colors_fr <- c("grey", "yellow", "orange", "red", "dark red")
-
-#Wet Flatlands
-par(cex = font*mult)
-wf_acat <- barplot(xeric_uplands[,type], xeric_uplands$fuelbed, 
-                   col = mapply(function(y) colors_fr[y+1], 
-                                xeric_uplands$mfri), 
-                   names.arg = NULL, 
-                   main = paste("Xeric Uplands", 
-                                names(xeric_uplands)[type], 
-                                sep = " "), 
-                   ylim = c(0, max(xeric_uplands[,type])))
-
-vps <- baseViewports()
-pushViewport(vps$inner, vps$figure, vps$plot)
-
-grid.text(as.character(xeric_uplands$fuelbed),
-          x = unit(wf_acat, "native"), y=unit(-1, "lines"),
-          just="right", rot=50, gp = gpar(cex = font))
-popViewport(3)
-
-#This output is much better than the first iteration (step 8).
-#As in step 8, there is the expected declining PIG as mfri lengthens, but there is also
+#This output is much better than the first iteration (step 9).
+#As in step 9, there is the expected declining PIG as mfri lengthens, but there is also
 #the expected low PIG in young stands.
 
 #NEXT STEP, LOOK AT WIDER RANGE OF FUELBEDS IN  PLANTATIONS
 
 ##############################################################################################################
 ##############################################################################################################
-#STEP 18: 
+#STEP 19:
+-----------------------------------------------------------------------------
+  -----------------------------------------------------------------------------
+  -----------------------------------------------------------------------------
+  -----------------------------------------------------------------------------
+  -----------------------------------------------------------------------------
+  -----------------------------------------------------------------------------
+  -----------------------------------------------------------------------------
+#start here next week (J Cronan -- 8-Dec-2017)
+  
 #ALL PLANTATION FUELBEDS IN ALL TOPOGRAPHIC POSITIONS
 
 #Subset all plantation fuelbeds by topographic position.
