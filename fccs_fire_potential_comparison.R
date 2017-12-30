@@ -89,7 +89,9 @@ ros_test[(length(ros_test[,1]) -5):length(ros_test[,1]),]
 max_ros <- ros_test$benchmark_ros[(length(ros_test[,1]) -1)]
 
 #Convert benchmark ROS into probability of ignition (PIG)
-bros_pig <- round(fbsc$benchmark_ros/max_ros,4)
+benchmark_pig <- round(fbsc$benchmark_ros/max_ros,4)
+
+#The salt marsh fuelbed will still be over 1 so adjust down to one.
 
 #Load initial FCCS fire behavior predictions.
 #Fuel Moisture scenario -- 1
@@ -102,17 +104,18 @@ fca <- as.character(fbsc$fuelbed)
 fcb <- strsplit(fca, "")
 fcc <- matrix(as.numeric(unlist(fcb)), nrow = length(fcb), ncol = length(fcb[[1]]), byrow = T)
 
-#Calculate the difference between your expert opinion probability of ignition and the probability
-#of ignition derived from FCCS benchmark rate of spread predictions.
-pig_dif <- fbsc$cronan_pig - bros_pig
-
 #Create a data frame that can be used for analysis.
-fbsd <- data.frame(fuelbed = fbsc$fuelbed, andreu_fuelbed_no = fbsc$andreu_fuelbed_no, 
-                   benchmark_ros = fbsc$benchmark_ros, fccs_pig = bros_pig, 
-                   cronan_pig = fbsc$probability_of_ignition, 
-                   diff_pig = fbsc$probability_of_ignition - bros_pig, 
-                   topo = fcc[,1], 
-                   cover = fcc[,3], treatment = fcc[,4], mfri = fcc[,5], age = fcc[,7])
+benchmark.df <- data.frame(fuelbed = fbsc$fuelbed, 
+                           andreu_fuelbed_no = fbsc$andreu_fuelbed_no, 
+                           topo = fcc[,1], 
+                           cover = fcc[,3], 
+                           treatment = fcc[,4], 
+                           mfri = fcc[,5], 
+                           age = fcc[,7], 
+                           expected_pig = fbsc$probability_of_ignition, 
+                           benchmark_ros = fbsc$benchmark_ros, 
+                           benchmark_pig = benchmark_pig, 
+                           benchmark_dif = fbsc$probability_of_ignition - benchmark_pig)
 
 #STEP 4: 
 #CREATE FUNCTIONS FOR GRAPHICS
@@ -344,6 +347,108 @@ x4plot <- function(a,b,c,d,x,z)
   popViewport(3)
 }
 
+#Create a function for a 4-panel bar chart
+x4plot_compare <- function(a,b,x,w,z)
+{
+  
+  #Font size for all text in plot
+  font <- 0.7
+  mult <- 1
+  
+  #Layout panels
+  nf <- layout(matrix(c(1,2,3,4), 2, 2, byrow = TRUE))
+  layout.show(nf)
+  
+  #Colors from yellow to red for fire frequency (high to low)
+  colors_fr <- c("grey", "yellow", "orange", "red", "dark red")
+  
+  #Upper Panels
+  upper_y.axis <- c(min(0, 
+                      a[,x], 
+                      a[,w]), 
+                  max(a[,x],
+                      a[,w]))
+  
+  #Lower Panels
+  lower_y.axis <- c(min(0, 
+                        b[,x], 
+                        b[,w]), 
+                    max(b[,x],
+                        b[,w]))
+  
+  #Upper Left
+  par(cex = font*mult)
+  ul <- barplot(a[,x], a$fuelbed, 
+                    col = mapply(function(y) colors_fr[y+1], 
+                                 a$mfri), 
+                    names.arg = NULL, 
+                    main = paste(z[1], sep = " "), 
+                    ylim = upper_y.axis)
+  
+  vps <- baseViewports()
+  pushViewport(vps$inner, vps$figure, vps$plot)
+  
+  grid.text(as.character(a$fuelbed),
+            x = unit(ul, "native"), y=unit(-1, "lines"),
+            just="right", rot=50, gp = gpar(cex = font))
+  popViewport(3)
+  
+  #Upper Right
+  ur <- barplot(a[,w], a$fuelbed, 
+                    col = mapply(function(y) colors_fr[y+1], 
+                                 a$mfri), 
+                    names.arg = NULL, 
+                    main = paste(z[2], sep = " "), 
+                    ylim = upper_y.axis)
+  
+  vps <- baseViewports()
+  pushViewport(vps$inner, vps$figure, vps$plot)
+  
+  
+  grid.text(as.character(a$fuelbed),
+            x = unit(ur, "native"), y=unit(-1, "lines"),
+            just="right", rot=50, gp = gpar(cex = font))
+  popViewport(3)
+  
+  #Lower Left
+  #Column number of fuelbed parameter you want to look at
+  type <-x
+  
+  ll <- barplot(b[,type], b$fuelbed, 
+                    col = mapply(function(y) colors_fr[y+1], 
+                                 b$mfri), 
+                    names.arg = NULL, 
+                    main = paste(z[3], sep = " "), 
+                    ylim = lower_y.axis)
+  
+  vps <- baseViewports()
+  pushViewport(vps$inner, vps$figure, vps$plot)
+  
+  grid.text(as.character(b$fuelbed),
+            x = unit(ll, "native"), y=unit(-1, "lines"),
+            just="right", rot=50, gp = gpar(cex = font))
+  popViewport(3)
+  
+  #Lower Right
+  #Column number of fuelbed parameter you want to look at
+  type <-w
+  
+  lr <- barplot(b[,type], b$fuelbed, 
+                    col = mapply(function(y) colors_fr[y+1], 
+                                 b$mfri), 
+                    names.arg = NULL, 
+                    main = paste(z[4], sep = " "), 
+                    ylim = lower_y.axis)
+  
+  vps <- baseViewports()
+  pushViewport(vps$inner, vps$figure, vps$plot)
+  
+  
+  grid.text(as.character(b$fuelbed),
+            x = unit(lr, "native"), y=unit(-1, "lines"),
+            just="right", rot=50, gp = gpar(cex = font))
+  popViewport(3)
+}
 ##############################################################################################################
 ##############################################################################################################
 ##############################################################################################################
@@ -376,7 +481,7 @@ x4plot <- function(a,b,c,d,x,z)
 
 #                                       FUEL MOISTURE SCENARIO 1 -- ITERATION 1
 #EVALUATE PROBABILITY OF IGNITION VALUES IN THE CURRENT FDM STM/LOOKUP TABLES
-
+#s1i1
 
 
 
@@ -434,28 +539,28 @@ plotTitle <- vector()
 
 #Subset wet flatlands fuelbeds you want to look at
 plotTitle[1] <- "Wet Flatlands"
-wet_flatlands <- fbsd[fbsd$fuelbed %in% c(1011101:1011106, 
+wet_flatlands <- benchmark.df[benchmark.df$fuelbed %in% c(1011101:1011106, 
                                           1011201:1011206, 
                                           1011301:1011306, 
                                           1031401:1031406),]
 wet_flatlands <- wet_flatlands[order(wet_flatlands$fuelbed),]
 
 plotTitle[2] <- "Mesic Flatlands"
-mesic_flatlands <- fbsd[fbsd$fuelbed %in% c(2011101:2011106, 
+mesic_flatlands <- benchmark.df[benchmark.df$fuelbed %in% c(2011101:2011106, 
                                             2011201:2011206, 
                                             2011301:2011306, 
                                             2031401:2031406),]
 mesic_flatlands <- mesic_flatlands[order(mesic_flatlands$fuelbed),]
 
 plotTitle[3] <- "Mesic Uplands"
-mesic_uplands <- fbsd[fbsd$fuelbed %in% c(3011101:3011106, 
+mesic_uplands <- benchmark.df[benchmark.df$fuelbed %in% c(3011101:3011106, 
                                           3011201:3011206, 
                                           3011301:3011306, 
                                           3031401:3031406),]
 mesic_uplands <- mesic_uplands[order(mesic_uplands$fuelbed),]
 
 plotTitle[4] <- "Xeric Uplands"
-xeric_uplands <- fbsd[fbsd$fuelbed %in% c(4011101:4011106, 
+xeric_uplands <- benchmark.df[benchmark.df$fuelbed %in% c(4011101:4011106, 
                                           4011201:4011206, 
                                           4011301:4011306, 
                                           4031401:4031406),]
@@ -469,7 +574,7 @@ xeric_uplands <- xeric_uplands[order(xeric_uplands$fuelbed),]
 #increase with stand age for frequently burned fuel types as canopy and development of wiregrass 
 #contributes to flammable fine fuels on the forest floor.
 #5 = Eglin staff predictions for probability of ignition.
-x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 5, plotTitle)
+x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 8, plotTitle)
 
 #As we can see in the output there is the expected trend across mfri, but not
 #stand age. This is likely due to the fact that you did not put a lot of effort into
@@ -485,9 +590,9 @@ dev.off()
 
 #Subset all natural fuelbeds in wet flatlands
 plotTitle <- "Wet Flatlands -- Natural Fuelbeds"
-wet_flatlands <- fbsd[fbsd$topo == 1 & fbsd$treatment == 1,]
+wet_flatlands <- benchmark.df[benchmark.df$topo == 1 & benchmark.df$treatment == 1,]
 
-x1plot(wet_flatlands, 5, plotTitle)
+x1plot(wet_flatlands, 8, plotTitle)
   
 #As we can see in the output there is the expected trend across mfri, but not
 #stand age. This is likely due to the fact that you did not put a lot of effort into
@@ -503,9 +608,9 @@ dev.off()
 
 #Subset all natural fuelbeds in mesic flatlands
 plotTitle <- "Mesic Flatlands -- Natural Fuelbeds"
-mesic_flatlands <- fbsd[fbsd$topo == 2 & fbsd$treatment == 1,]
+mesic_flatlands <- benchmark.df[benchmark.df$topo == 2 & benchmark.df$treatment == 1,]
 
-x1plot(mesic_flatlands, 5, plotTitle)
+x1plot(mesic_flatlands, 8, plotTitle)
 
 #As we can see in the output there is the expected trend across mfri, but not
 #stand age. This is likely due to the fact that you did not put a lot of effort into
@@ -521,9 +626,9 @@ dev.off()
 
 #Subset all natural fuelbeds in mesic uplands
 plotTitle <- "Mesic Uplands -- Natural Fuelbeds"
-mesic_uplands <- fbsd[fbsd$topo == 3 & fbsd$treatment == 1,]
+mesic_uplands <- benchmark.df[benchmark.df$topo == 3 & benchmark.df$treatment == 1,]
 
-x1plot(mesic_uplands, 5, plotTitle)
+x1plot(mesic_uplands, 8, plotTitle)
 
 #As we can see in the output there is the expected trend across mfri, but not
 #stand age. This is likely due to the fact that you did not put a lot of effort into
@@ -538,9 +643,9 @@ x1plot(mesic_uplands, 5, plotTitle)
 
 #Subset all natural fuelbeds in xeric uplands
 plotTitle <- "Xeric Uplands -- Natural Fuelbeds"
-xeric_uplands <- fbsd[fbsd$topo == 4 & fbsd$treatment == 1,]
+xeric_uplands <- benchmark.df[benchmark.df$topo == 4 & benchmark.df$treatment == 1,]
 
-x1plot(xeric_uplands, 5, plotTitle)
+x1plot(xeric_uplands, 8, plotTitle)
 
 #As we can see in the output there is the expected trend across mfri, but not
 #stand age. This is likely due to the fact that you did not put a lot of effort into
@@ -561,12 +666,12 @@ plotTitle <- c("Wet Flatlands",
                "Xeric Uplands")
 
 #Subset all plantation fuelbeds by topographic region.
-wet_flatlands <- fbsd[fbsd$topo == 1 & fbsd$treatment == 5,]
-mesic_flatlands <- fbsd[fbsd$topo == 2 & fbsd$treatment == 5,]
-mesic_uplands <- fbsd[fbsd$topo == 3 & fbsd$treatment == 5,]
-xeric_uplands <- fbsd[fbsd$topo == 4 & fbsd$treatment == 5,]
+wet_flatlands <- benchmark.df[benchmark.df$topo == 1 & benchmark.df$treatment == 5,]
+mesic_flatlands <- benchmark.df[benchmark.df$topo == 2 & benchmark.df$treatment == 5,]
+mesic_uplands <- benchmark.df[benchmark.df$topo == 3 & benchmark.df$treatment == 5,]
+xeric_uplands <- benchmark.df[benchmark.df$topo == 4 & benchmark.df$treatment == 5,]
 
-x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 5, plotTitle)
+x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 8, plotTitle)
 
 #As we can see in the output there is the expected trend across mfri, but not
 #stand age. This is likely due to the fact that you did not put a lot of effort into
@@ -586,10 +691,10 @@ plotTitle <- c("Mesic Uplands",
 
 #Subset restoration fuelbeds derived from natural fuels by topographic position
 #Note ---- there are no restoration fuelbeds in wet or mesic flatlands.
-mesic_uplands <- fbsd[fbsd$topo == 3 & fbsd$treatment %in% c(2,3,4),]
-xeric_uplands <- fbsd[fbsd$topo == 4 & fbsd$treatment %in% c(2,3,4),]
+mesic_uplands <- benchmark.df[benchmark.df$topo == 3 & benchmark.df$treatment %in% c(2,3,4),]
+xeric_uplands <- benchmark.df[benchmark.df$topo == 4 & benchmark.df$treatment %in% c(2,3,4),]
 
-x2plot(mesic_uplands, xeric_uplands, 5, plotTitle)
+x2plot(mesic_uplands, xeric_uplands, 8, plotTitle)
 
 #Trends are not quite as expected.
 #1) Post-thinning should have low PIGs >> they are too high
@@ -613,10 +718,10 @@ plotTitle <- c("Mesic Uplands",
 
 #Subset restoration fuelbeds derived from plantations.
 #Note ---- there are no restoration fuelbeds in wet or mesic flatlands.
-mesic_uplands <- fbsd[fbsd$topo == 3 & fbsd$treatment %in% c(6,7,8),]
-xeric_uplands <- fbsd[fbsd$topo == 4 & fbsd$treatment %in% c(6,7,8),]
+mesic_uplands <- benchmark.df[benchmark.df$topo == 3 & benchmark.df$treatment %in% c(6,7,8),]
+xeric_uplands <- benchmark.df[benchmark.df$topo == 4 & benchmark.df$treatment %in% c(6,7,8),]
 
-x2plot(mesic_uplands, xeric_uplands, 5, plotTitle)
+x2plot(mesic_uplands, xeric_uplands, 8, plotTitle)
 
 #Trends are not quite as expected.
 #1) Post-thinning should have low PIGs >> they are too high
@@ -645,63 +750,70 @@ pig_coef <- read.table("inputs/pig_coefficients.csv",
 
 #Create a string of coefficients for each fuelbed in FDM inputs
 new_pigs <- mapply(function(y) {
-  a1 <- pig_coef[,2][pig_coef[,1] == fbsd[y,7]]
-  b1 <- pig_coef[,4][pig_coef[,3] == fbsd[y,8]]
-  c1 <- pig_coef[,6][pig_coef[,5] == fbsd[y,9]]
-  d1 <- pig_coef[,8][pig_coef[,7] == fbsd[y,10]]
-  e1 <- pig_coef[,10][pig_coef[,9] == fbsd[y,11]]
+  a1 <- pig_coef[,2][pig_coef[,1] == benchmark.df[y,3]]
+  b1 <- pig_coef[,4][pig_coef[,3] == benchmark.df[y,4]]
+  c1 <- pig_coef[,6][pig_coef[,5] == benchmark.df[y,5]]
+  d1 <- pig_coef[,8][pig_coef[,7] == benchmark.df[y,6]]
+  e1 <- pig_coef[,10][pig_coef[,9] == benchmark.df[y,7]]
   c(a1, b1, c1, d1, e1)
-}, 1:length(fbsd[,1]))
+}, 1:length(benchmark.df[,1]))
 
 #Rotate matrix
 sys_pig_comps <- t(new_pigs)
 
 #Calculate product of coefficients.
-sys_pigs <- sys_pig_comps[,1] *sys_pig_comps[,2] *sys_pig_comps[,3] *sys_pig_comps[,4] *sys_pig_comps[,5]
+expected_pigs_v2 <- sys_pig_comps[,1] *sys_pig_comps[,2] *sys_pig_comps[,3] *sys_pig_comps[,4] *sys_pig_comps[,5]
 
-
+#Stanardize values of version 2 expected PIGs to 1.0
+expected_pigs_v2 <- expected_pigs_v2/max(expected_pigs_v2)
 
 #Create a data frame that can be used for analysis.
-fbsd <- data.frame(fuelbed = fbsc$fuelbed, andreu_fuelbed_no = fbsc$andreu_fuelbed_no, 
-                   benchmark_ros = fbsc$benchmark_ros, fccs_pig = bros_pig, 
-                   cronan_pig = sys_pigs, 
-                   diff_pig = fbsc$probability_of_ignition - bros_pig, 
-                   topo = fcc[,1], 
-                   cover = fcc[,3], treatment = fcc[,4], mfri = fcc[,5], age = fcc[,7])
-
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
+benchmark.df_v2 <- data.frame(fuelbed = fbsc$fuelbed, 
+                           andreu_fuelbed_no = fbsc$andreu_fuelbed_no, 
+                           topo = fcc[,1], 
+                           cover = fcc[,3], 
+                           treatment = fcc[,4], 
+                           mfri = fcc[,5], 
+                           age = fcc[,7], 
+                           expected_pig = expected_pigs_v2, 
+                           benchmark_ros = fbsc$benchmark_ros, 
+                           benchmark_pig = benchmark_pig, 
+                           benchmark_dif = expected_pigs_v2 - benchmark_pig)
 
 
-#                                        FUEL MOISTURE SCENARIO 3 -- ITERATION 2
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+
+
+#                                        FUEL MOISTURE SCENARIO 1 -- ITERATION 2
 #EVALUATE PROBABILITY OF IGNITION VALUES FOR THE SYSTEMATICALLY DERIVED PIGS
-
+#s1i2
 
 
 
@@ -755,28 +867,28 @@ plotTitle <- c("Wet Flatlands",
 
 #Subset selected natural fuelbeds by topographic position.
 #Wet Flatlands
-wet_flatlands <- fbsd[fbsd$fuelbed %in% c(1011101:1011106, 
+wet_flatlands <- benchmark.df_v2[benchmark.df_v2$fuelbed %in% c(1011101:1011106, 
                                           1011201:1011206, 
                                           1011301:1011306, 
                                           1031401:1031406),]
 wet_flatlands <- wet_flatlands[order(wet_flatlands$fuelbed),]
 
 #Mesic Flatlands
-mesic_flatlands <- fbsd[fbsd$fuelbed %in% c(2011101:2011106, 
+mesic_flatlands <- benchmark.df_v2[benchmark.df_v2$fuelbed %in% c(2011101:2011106, 
                                             2011201:2011206, 
                                             2011301:2011306, 
                                             2031401:2031406),]
 mesic_flatlands <- mesic_flatlands[order(mesic_flatlands$fuelbed),]
 
 #Mesic Uplands
-mesic_uplands <- fbsd[fbsd$fuelbed %in% c(3011101:3011106, 
+mesic_uplands <- benchmark.df_v2[benchmark.df_v2$fuelbed %in% c(3011101:3011106, 
                                           3011201:3011206, 
                                           3011301:3011306, 
                                           3031401:3031406),]
 mesic_uplands <- mesic_uplands[order(mesic_uplands$fuelbed),]
 
 #Xeric Uplands
-xeric_uplands <- fbsd[fbsd$fuelbed %in% c(4011101:4011106, 
+xeric_uplands <- benchmark.df_v2[benchmark.df_v2$fuelbed %in% c(4011101:4011106, 
                                           4011201:4011206, 
                                           4011301:4011306, 
                                           4031401:4031406),]
@@ -784,7 +896,7 @@ xeric_uplands <- xeric_uplands[order(xeric_uplands$fuelbed),]
 
 #ALL PLANTATION FUELBEDS IN ALL TOPOGRAPHIC POSITIONS
 dev.off()
-x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 5, plotTitle)
+x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 8, plotTitle)
 
 
 #This output is much better than the first itteration (step 5).
@@ -800,10 +912,10 @@ x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 5, plotTitl
 
 #Subset all natural fuelbeds in mesic uplands
 plotTitle <- "Wet Flatlands -- Natural Fuelbeds"
-wet_flatlands <- fbsd[fbsd$topo == 1 & fbsd$treatment == 1,]
+wet_flatlands <- benchmark.df_v2[benchmark.df_v2$topo == 1 & benchmark.df_v2$treatment == 1,]
 
 dev.off()
-x1plot(wet_flatlands, 5, plotTitle)
+x1plot(wet_flatlands, 8, plotTitle)
 
 #This output is much better than the first iteration (step 5).
 #As in step 5, there is the expected declining PIG as mfri lengthens, but there is also
@@ -818,10 +930,10 @@ x1plot(wet_flatlands, 5, plotTitle)
 
 #Subset all natural fuelbeds for mesic flatlands
 plotTitle <- "Mesic Flatlands -- Natural Fuelbeds"
-mesic_flatlands <- fbsd[fbsd$topo == 2 & fbsd$treatment == 1,]
+mesic_flatlands <- benchmark.df_v2[benchmark.df_v2$topo == 2 & benchmark.df_v2$treatment == 1,]
 
 dev.off()
-x1plot(mesic_flatlands, 5, plotTitle)
+x1plot(mesic_flatlands, 8, plotTitle)
 
 #This output is much better than the first iteration (step 7).
 #As in step 7, there is the expected declining PIG as mfri lengthens, but there is also
@@ -836,10 +948,10 @@ x1plot(mesic_flatlands, 5, plotTitle)
 
 #Subset all natural fuelbeds for mesic uplands
 plotTitle <- "Mesic Uplands -- Natural Fuelbeds"
-mesic_uplands <- fbsd[fbsd$topo == 3 & fbsd$treatment == 1,]
+mesic_uplands <- benchmark.df_v2[benchmark.df_v2$topo == 3 & benchmark.df_v2$treatment == 1,]
 
 dev.off()
-x1plot(mesic_uplands, 5, plotTitle)
+x1plot(mesic_uplands, 8, plotTitle)
 
 #This output is much better than the first iteration (step 8).
 #As in step 8, there is the expected declining PIG as mfri lengthens, but there is also
@@ -854,10 +966,10 @@ x1plot(mesic_uplands, 5, plotTitle)
 
 #Subset all natural fuelbeds for xeric uplands
 plotTitle <- "Xeric Uplands -- Natural Fuelbeds"
-xeric_uplands <- fbsd[fbsd$topo == 4 & fbsd$treatment == 1,]
+xeric_uplands <- benchmark.df_v2[benchmark.df_v2$topo == 4 & benchmark.df_v2$treatment == 1,]
 
 dev.off()
-x1plot(xeric_uplands, 5, plotTitle)
+x1plot(xeric_uplands, 8, plotTitle)
 
 #This output is much better than the first iteration (step 9).
 #As in step 9, there is the expected declining PIG as mfri lengthens, but there is also
@@ -875,14 +987,14 @@ plotTitle <- c("Wet Flatlands -- Plantations",
                "Mesic Flatlands -- Plantations", 
                "Mesic Uplands -- Plantations", 
                "Xeric Uplands -- Plantations")
-wet_flatlands <- fbsd[fbsd$topo == 1 & fbsd$treatment == 5,]
-mesic_flatlands <- fbsd[fbsd$topo == 2 & fbsd$treatment == 5,]
-mesic_uplands <- fbsd[fbsd$topo == 3 & fbsd$treatment == 5,]
-xeric_uplands <- fbsd[fbsd$topo == 4 & fbsd$treatment == 5,]
+wet_flatlands <- benchmark.df_v2[benchmark.df_v2$topo == 1 & benchmark.df_v2$treatment == 5,]
+mesic_flatlands <- benchmark.df_v2[benchmark.df_v2$topo == 2 & benchmark.df_v2$treatment == 5,]
+mesic_uplands <- benchmark.df_v2[benchmark.df_v2$topo == 3 & benchmark.df_v2$treatment == 5,]
+xeric_uplands <- benchmark.df_v2[benchmark.df_v2$topo == 4 & benchmark.df_v2$treatment == 5,]
 
 #ALL PLANTATION FUELBEDS IN ALL TOPOGRAPHIC POSITIONS
 dev.off()
-x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 5, plotTitle)
+x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 8, plotTitle)
 
 
 #This output is much better than the first iteration (step 9).
@@ -901,10 +1013,10 @@ x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 5, plotTitl
 #Note ----- there are no restoration fuelbeds in wet or mesic flatlands
 plotTitle <- c("Mesic Uplands -- Restoration", 
                "Xeric Uplands -- Restoration")
-mesic_uplands <- fbsd[fbsd$topo == 3 & fbsd$treatment %in% c(2,3,4),]
-xeric_uplands <- fbsd[fbsd$topo == 4 & fbsd$treatment %in% c(2,3,4),]
+mesic_uplands <- benchmark.df_v2[benchmark.df_v2$topo == 3 & benchmark.df_v2$treatment %in% c(2,3,4),]
+xeric_uplands <- benchmark.df_v2[benchmark.df_v2$topo == 4 & benchmark.df_v2$treatment %in% c(2,3,4),]
 
-x2plot(mesic_uplands, xeric_uplands, 5, plotTitle)
+x2plot(mesic_uplands, xeric_uplands, 8, plotTitle)
 
 #This output is much better than the first iteration (step 9).
 #As in step 9, there is the expected declining PIG as mfri lengthens, but there is also
@@ -934,10 +1046,10 @@ x2plot(mesic_uplands, xeric_uplands, 5, plotTitle)
 #Note ----- there are no restoration fuelbeds in wet or mesic flatlands
 plotTitle <- c("Mesic Uplands -- Plantations with Restoration", 
                "Xeric Uplands -- Plantations with Restoration")
-mesic_uplands <- fbsd[fbsd$topo == 3 & fbsd$treatment %in% c(6,7,8),]
-xeric_uplands <- fbsd[fbsd$topo == 4 & fbsd$treatment %in% c(6,7,8),]
+mesic_uplands <- benchmark.df_v2[benchmark.df_v2$topo == 3 & benchmark.df_v2$treatment %in% c(6,7,8),]
+xeric_uplands <- benchmark.df_v2[benchmark.df_v2$topo == 4 & benchmark.df_v2$treatment %in% c(6,7,8),]
 
-x2plot(mesic_uplands, xeric_uplands, 5, plotTitle)
+x2plot(mesic_uplands, xeric_uplands, 8, plotTitle)
 
 #This output is much better than the first iteration (step 9).
 #As in step 9, there is the expected declining PIG as mfri lengthens, but there is also
@@ -967,17 +1079,6 @@ x2plot(mesic_uplands, xeric_uplands, 5, plotTitle)
 #RESPONSE:
 #Compare systematically derived PIGs with Benchmark ROS-derived PIGs
 
-#Calculate the deviation between the two
-pig_dev <- fbsd$cronan_pig - fbsd$fccs_pig
-
-#Create a data frame that can be used for analysis.
-fbse <- data.frame(fuelbed = fbsd$fuelbed, andreu_fuelbed_no = fbsd$andreu_fuelbed_no, 
-                   benchmark_ros = fbsd$benchmark_ros, fccd_pig = bros_pig, 
-                   cronan_pig = sys_pigs, 
-                   pig_dev = pig_dev, 
-                   topo = fcc[,1], 
-                   cover = fcc[,3], treatment = fcc[,4], mfri = fcc[,5], age = fcc[,7])
-
 ##############################################################################################################
 ##############################################################################################################
 ##############################################################################################################
@@ -1008,10 +1109,10 @@ fbse <- data.frame(fuelbed = fbsd$fuelbed, andreu_fuelbed_no = fbsd$andreu_fuelb
 ##############################################################################################################
 
 
-#                                        FUEL MOISTURE SCENARIO 3 -- ITERATION 3
+#                                        FUEL MOISTURE SCENARIO 1 -- ITERATION 3
 #SUBTRACT BENCHMARK ROS-DERIVED PIGS FROM SYSTEMATICALLY-DERIVED PIGS AND EVALUATE DEGREE
 #OF CORRELATION
-
+#s1i3
 
 
 
@@ -1065,28 +1166,28 @@ plotTitle <- c("Wet Flatlands",
                "Mesic Flatlands", 
                "Mesic Uplands", 
                "Xeric Uplands")
-wet_flatlands <- fbse[fbse$fuelbed %in% c(1011101:1011106, 
+wet_flatlands <- benchmark.df_v2[benchmark.df_v2$fuelbed %in% c(1011101:1011106, 
                                           1011201:1011206, 
                                           1011301:1011306, 
                                           1031401:1031406),]
 wet_flatlands <- wet_flatlands[order(wet_flatlands$fuelbed),]
 
 #Mesic Flatlands
-mesic_flatlands <- fbse[fbse$fuelbed %in% c(2011101:2011106, 
+mesic_flatlands <- benchmark.df_v2[benchmark.df_v2$fuelbed %in% c(2011101:2011106, 
                                             2011201:2011206, 
                                             2011301:2011306, 
                                             2031401:2031406),]
 mesic_flatlands <- mesic_flatlands[order(mesic_flatlands$fuelbed),]
 
 #Mesic Uplands
-mesic_uplands <- fbse[fbse$fuelbed %in% c(3011101:3011106, 
+mesic_uplands <- benchmark.df_v2[benchmark.df_v2$fuelbed %in% c(3011101:3011106, 
                                           3011201:3011206, 
                                           3011301:3011306, 
                                           3031401:3031406),]
 mesic_uplands <- mesic_uplands[order(mesic_uplands$fuelbed),]
 
 #Xeric Uplands
-xeric_uplands <- fbse[fbse$fuelbed %in% c(4011101:4011106, 
+xeric_uplands <- benchmark.df_v2[benchmark.df_v2$fuelbed %in% c(4011101:4011106, 
                                           4011201:4011206, 
                                           4011301:4011306, 
                                           4031401:4031406),]
@@ -1095,7 +1196,7 @@ xeric_uplands <- xeric_uplands[order(xeric_uplands$fuelbed),]
 
 #ALL PLANTATION FUELBEDS IN ALL TOPOGRAPHIC POSITIONS
 dev.off()
-x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 6, plotTitle)
+x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 11, plotTitle)
 
 #Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
 #expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
@@ -1110,10 +1211,10 @@ x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 6, plotTitl
 
 #Subset all natural fuelbeds in wet flatlands fuelbeds.
 plotTitle <- c("Wet Flatlands -- Natural Fuelbeds")
-wet_flatlands <- fbse[fbse$topo == 1 & fbse$treatment == 1,]
+wet_flatlands <- benchmark.df_v2[benchmark.df_v2$topo == 1 & benchmark.df_v2$treatment == 1,]
 
 dev.off()
-x1plot(wet_flatlands, 6, plotTitle)
+x1plot(wet_flatlands, 11, plotTitle)
 
 #Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
 #expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
@@ -1128,10 +1229,10 @@ x1plot(wet_flatlands, 6, plotTitle)
 
 #Subset all natural fuelbeds for mesic flatlands
 plotTitle <- c("Mesic Flatlands -- Natural Fuelbeds")
-mesic_flatlands <- fbse[fbse$topo == 2 & fbse$treatment == 1,]
+mesic_flatlands <- benchmark.df_v2[benchmark.df_v2$topo == 2 & benchmark.df_v2$treatment == 1,]
 
 dev.off()
-x1plot(mesic_flatlands, 6, plotTitle)
+x1plot(mesic_flatlands, 11, plotTitle)
 
 #Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
 #expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
@@ -1146,10 +1247,10 @@ x1plot(mesic_flatlands, 6, plotTitle)
 
 #Subset all natural fuelbeds for mesic uplands
 plotTitle <- c("Mesic Uplands -- Natural Fuelbeds")
-mesic_uplands <- fbse[fbse$topo == 3 & fbse$treatment == 1,]
+mesic_uplands <- benchmark.df_v2[benchmark.df_v2$topo == 3 & benchmark.df_v2$treatment == 1,]
 
 dev.off()
-x1plot(mesic_uplands, 6, plotTitle)
+x1plot(mesic_uplands, 11, plotTitle)
 
 #Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
 #expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
@@ -1164,10 +1265,10 @@ x1plot(mesic_uplands, 6, plotTitle)
 
 #Subset all natural fuelbeds for xeric uplands
 plotTitle <- c("Xeric Uplands -- Natural Fuelbeds")
-xeric_uplands <- fbse[fbse$topo == 4 & fbse$treatment == 1,]
+xeric_uplands <- benchmark.df_v2[benchmark.df_v2$topo == 4 & benchmark.df_v2$treatment == 1,]
 
 dev.off()
-x1plot(xeric_uplands, 6, plotTitle)
+x1plot(xeric_uplands, 11, plotTitle)
 
 #Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
 #expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
@@ -1185,14 +1286,14 @@ plotTitle <- c("Wet Flatlands -- Plantations",
                "Mesic Flatlands -- Plantations", 
                "Mesic Uplands -- Plantations", 
                "Xeric Uplands -- Plantations")
-wet_flatlands <- fbse[fbse$topo == 1 & fbse$treatment == 5,]
-mesic_flatlands <- fbse[fbse$topo == 2 & fbse$treatment == 5,]
-mesic_uplands <- fbse[fbse$topo == 3 & fbse$treatment == 5,]
-xeric_uplands <- fbse[fbse$topo == 4 & fbse$treatment == 5,]
+wet_flatlands <- benchmark.df_v2[benchmark.df_v2$topo == 1 & benchmark.df_v2$treatment == 5,]
+mesic_flatlands <- benchmark.df_v2[benchmark.df_v2$topo == 2 & benchmark.df_v2$treatment == 5,]
+mesic_uplands <- benchmark.df_v2[benchmark.df_v2$topo == 3 & benchmark.df_v2$treatment == 5,]
+xeric_uplands <- benchmark.df_v2[benchmark.df_v2$topo == 4 & benchmark.df_v2$treatment == 5,]
 
 #ALL PLANTATION FUELBEDS IN ALL TOPOGRAPHIC POSITIONS
 dev.off()
-x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 6, plotTitle)
+x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 11, plotTitle)
 
 #Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
 #expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
@@ -1210,11 +1311,11 @@ x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 6, plotTitl
 #Note ----- there are no restoration fuelbeds in wet or mesic flatlands
 plotTitle <- c("Mesic Uplands -- Restoration/Natural", 
                "Xeric Uplands -- Restoration/Natural")
-mesic_uplands <- fbse[fbse$topo == 3 & fbse$treatment %in% c(2,3,4),]
-xeric_uplands <- fbse[fbse$topo == 4 & fbse$treatment %in% c(2,3,4),]
+mesic_uplands <- benchmark.df_v2[benchmark.df_v2$topo == 3 & benchmark.df_v2$treatment %in% c(2,3,4),]
+xeric_uplands <- benchmark.df_v2[benchmark.df_v2$topo == 4 & benchmark.df_v2$treatment %in% c(2,3,4),]
 
 dev.off()
-x2plot(mesic_uplands, xeric_uplands, 6, plotTitle)
+x2plot(mesic_uplands, xeric_uplands, 11, plotTitle)
 
 #This output is much better than the first iteration (step 9).
 #As in step 9, there is the expected declining PIG as mfri lengthens, but there is also
@@ -1244,11 +1345,11 @@ x2plot(mesic_uplands, xeric_uplands, 6, plotTitle)
 #Note ----- there are no restoration fuelbeds in wet or mesic flatlands
 plotTitle <- c("Mesic Uplands -- Restoration/Plantations", 
                "Xeric Uplands -- Restoration/Plantations")
-mesic_uplands <- fbse[fbse$topo == 3 & fbse$treatment %in% c(6,7,8),]
-xeric_uplands <- fbse[fbse$topo == 4 & fbse$treatment %in% c(6,7,8),]
+mesic_uplands <- benchmark.df_v2[benchmark.df_v2$topo == 3 & benchmark.df_v2$treatment %in% c(6,7,8),]
+xeric_uplands <- benchmark.df_v2[benchmark.df_v2$topo == 4 & benchmark.df_v2$treatment %in% c(6,7,8),]
 
 dev.off()
-x2plot(mesic_uplands, xeric_uplands, 6, plotTitle)
+x2plot(mesic_uplands, xeric_uplands, 11, plotTitle)
 
 #This output is much better than the first iteration (step 9).
 #As in step 9, there is the expected declining PIG as mfri lengthens, but there is also
@@ -1279,7 +1380,8 @@ x2plot(mesic_uplands, xeric_uplands, 6, plotTitle)
 #STEP 30: 
 #QUANTIFY THE DEGREE OF CORRESPONDANCE BETWEEN FCCS/PREDICTED ROS-DERIVED PIGS AND EXPECTED PIGS.
 #THIS WILL BE THE BASIS FOR EVALUATING ALL FUTURE FCCS/PREDICTED ROS-DERIVED PIGS
-plot(fbse$cronan_pig, fbse$fccd_pig)
+#figure 1
+plot(benchmark.df_v2$expected_pig, benchmark.df_v2$benchmark_pig)
 
 #Show the linear model. 
 #If FCCS/Predicted ROS-derived PIGS lined up perfectly with expected values the model parameters
@@ -1293,12 +1395,12 @@ plot(fbse$cronan_pig, fbse$fccd_pig)
 #with the initial system of using Benchmark fuel moistures for all FCCS fuelbed runs to derive
 #PIGS because fine fuels in a swamp will have much wetter fuels than fine fuels in an upland 
 #stand of longleaf pine under weather conditions suitable for prescribed burninng.
-model <- lm(fbse$fccd_pig ~ fbse$cronan_pig)
-summary(model)
+benchmark.lm <- lm(benchmark.df_v2$benchmark_pig ~ benchmark.df_v2$expected_pig)
+summary(benchmark.lm)
 #Not even close
 
 #Quantify deviation from expected PIGS
-plot(fbse$pig_dev)
+plot(benchmark.df_v2$benchmark_dif)
 
 #Create a data frame to track total deviation from expected PIGS
 ms <- data.frame(Moisture_Scenario = c(1,2,3,4,5,6,7,8,9), 
@@ -1313,54 +1415,60 @@ ms <- data.frame(Moisture_Scenario = c(1,2,3,4,5,6,7,8,9),
                  Total = seq(0,1,9))
 
 #Populate data frame
-ms$WetFlatlands_Nat[1] <- round(sum(abs(fbse$pig_dev[fbse$topo == 1 & fbse$treatment == 1])),1)
-ms$MesicFlatlands_Nat[1] <- round(sum(abs(fbse$pig_dev[fbse$topo == 2 & fbse$treatment == 1])),1)
-ms$MesicUplands_Nat[1] <- round(sum(abs(fbse$pig_dev[fbse$topo == 3 & fbse$treatment == 1])),1)
-ms$XericUplands_Nat[1] <- round(sum(abs(fbse$pig_dev[fbse$topo == 4 & fbse$treatment == 1])),1)
-ms$WetFlatlands_Other[1] <- round(sum(abs(fbse$pig_dev[fbse$topo == 1 & fbse$treatment > 1])),1)
-ms$MesicFlatlands_Other[1] <- round(sum(abs(fbse$pig_dev[fbse$topo == 2 & fbse$treatment > 1])),1)
-ms$MesicUplands_Other[1] <- round(sum(abs(fbse$pig_dev[fbse$topo == 3 & fbse$treatment > 1])),1)
-ms$XericUplands_Other[1] <- round(sum(abs(fbse$pig_dev[fbse$topo == 4 & fbse$treatment > 1])),1)
-ms$Total[1] <- round(sum(abs(fbse$pig_dev)),1)
+scenario <- 1
+ms$WetFlatlands_Nat[scenario] <- round(sum(abs(ms2.df$benchmark_dif[ms2.df$topo == 1 & ms2.df$treatment == 1])),1)
+ms$MesicFlatlands_Nat[scenario] <- round(sum(abs(ms2.df$benchmark_dif[ms2.df$topo == 2 & ms2.df$treatment == 1])),1)
+ms$MesicUplands_Nat[scenario] <- round(sum(abs(ms2.df$benchmark_dif[ms2.df$topo == 3 & ms2.df$treatment == 1])),1)
+ms$XericUplands_Nat[scenario] <- round(sum(abs(ms2.df$benchmark_dif[ms2.df$topo == 4 & ms2.df$treatment == 1])),1)
+ms$WetFlatlands_Other[scenario] <- round(sum(abs(ms2.df$benchmark_dif[ms2.df$topo == 1 & ms2.df$treatment > 1])),1)
+ms$MesicFlatlands_Other[scenario] <- round(sum(abs(ms2.df$benchmark_dif[ms2.df$topo == 2 & ms2.df$treatment > 1])),1)
+ms$MesicUplands_Other[scenario] <- round(sum(abs(ms2.df$benchmark_dif[ms2.df$topo == 3 & ms2.df$treatment > 1])),1)
+ms$XericUplands_Other[scenario] <- round(sum(abs(ms2.df$benchmark_dif[ms2.df$topo == 4 & ms2.df$treatment > 1])),1)
+ms$Total[scenario] <- round(sum(abs(ms2.df$benchmark_dif)),1)
 
 ms
 
 
-sum(abs(fbse$pig_dev))
+sum(abs(benchmark.df_v2$benchmark_dif))
 
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
-##############################################################################################################
+#CONCLUSION: FIGURE 1 SHOWS THAT THE SALT MARSH FUELBED IS AN EXTREME OUTLIER
+#SOLUTION: CREATE TWO FUEL MOISTURE GROUPS
+#1 - High for the salt march
+#2 - Everything else stays at Benchmark
 
 
-#                                       FUEL MOISTURE SCENARIO 3 -- ITERATION 1
-#SUBTRACT BENCHMARK ROS-DERIVED PIGS FROM SYSTEMATICALLY-DERIVED PIGS AND EVALUATE DEGREE
-#OF CORRELATION
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+
+
+#                                       FUEL MOISTURE SCENARIO 2 -- ITERATION 1
+#s2i1
 
 
 
@@ -1406,84 +1514,52 @@ sum(abs(fbse$pig_dev))
 ##############################################################################################################
 #STEP 31: LOAD & TEST DATA
 
-#Load evaluation of synchronicity between STM, .xml, and FDM fuelbeds
-fbsa <- read.table("inputs/fuelbed_synchronicty.csv", 
-                   header=TRUE, sep=",", na.strings="NA", dec=".", strip.white=TRUE)
-
-#Recode the $andreu_fuelbed_no integers so they are the same as the FDM inputs.
-fbra <- as.character(fbsa$andreu_fuelbed_no)
-
-#Apply function
-fbrb <- sapply(fbra, recode)
-fbsa$andreu_fuelbed_no <- fbrb
-
-#strip out columns from sef_lut_all.csv and instead load that dataset from EglinAirForceBase repo.
-fbsb <- fbsa[,c(1:4,25)]
-
-#Load evaluation of synchronicity between STM, .xml, and FDM fuelbeds
-lut <- read.table("C:/Users/jcronan/Documents/GitHub/EglinAirForceBase/inputs/sef_lut_all.csv", 
-                  header=TRUE, sep=",", na.strings="NA", dec=".", strip.white=TRUE)
-
-#Compare fuelbed lists in scynchronicity file and lookup table. If they are different kill the script.
-all.equal(fbsb$fuelbed, lut$fuelbed)
-
-#Remove unused fuelbeds (these are fuelbeds that may exist in the fuelbed map, but are not in STMs).
-fbsc <- fbsb[!is.na(fbsb$andreu_fuelbed_no) == T,]
-
-#Before you apply the max Benchmark ROS to determine PIGs look at their distribution. 
-barplot(fbsc$benchmark_ros)
-
-#There is one Benchmark ROS that is way higher than the rest. This will suppress PIGs
-max(fbsc$benchmark_ros)
-fbsc[fbsc$benchmark_ros == max(fbsc$benchmark_ros),]
-
-#This is fuelbed 1071000 -- This is salt marsh
-#Use the next highest value
-ros_test <- fbsc[order(fbsc$benchmark_ros),]
-ros_test[(length(ros_test[,1]) -5):length(ros_test[,1]),]
-max_ros <- ros_test$benchmark_ros[(length(ros_test[,1]) -1)]
-
-#Convert benchmark ROS into probability of ignition (PIG)
-bros_pig <- round(fbsc$benchmark_ros/max_ros,4)
-
 #Load initial FCCS fire behavior predictions.
 #Fuel Moisture scenario -- 1
 #Transformations -- None
-fccs_fireBehavior <- read.table("inputs/fccs_ros_moistScenario_3_tansformation_none.csv", 
+fccs_fireBehavior <- read.table("inputs/fccs_ros_moistScenario_2_tansformation_none.csv", 
                                 header=TRUE, sep=",", na.strings="NA", dec=".", strip.white=TRUE)
 
-###
-#Start here (you left off on 12/28)
-#You need to assign ROS values from the fccs_fireBehavior object to the fbsa object which
-#has the complete list of fuelbeds. This will require you to crosswalk the fuels between these
-#two objects.
+#Condense this table to fuelbeds and rate of spread predictions
+#First recode the five digit fuelbed number to a seven digit number.
+ch.fb <- as.character(fccs_fireBehavior$Fuelbed_number)
+ch.fb_re <- mapply(function(y) {recode(y)}, ch.fb)
+ch.fb_reNu <- as.numeric(ch.fb_re)
+ros <- data.frame(fuelbed = ch.fb_reNu, ms2_ros = fccs_fireBehavior$Custom_ROS)
 
+#Merge Andreu's fuelbeds and model-derived ROS predictions into the complete list of Eglin Fuelbeds
+fbsd <- merge(fbsc, ros, by.x = "andreu_fuelbed_no", by.y = "fuelbed")
+fbse <- fbsd[order(fbsd$fuelbed),]
 
-#Break fuelbeds into component parts and create a dataframe that will be source for visualizations.
-fca <- as.character(fbsc$fuelbed)
-fcb <- strsplit(fca, "")
-fcc <- matrix(as.numeric(unlist(fcb)), nrow = length(fcb), ncol = length(fcb[[1]]), byrow = T)
+#Before you apply the max Moisture Scenario 3 ROS to determine PIGs look at their distribution. 
+barplot(fbse$ms2_ros)
+#Looks good. The last fuelbed (Rangeland) has the highest ROS and it is not dramatically higher than
+#others. Use rangeland as the max ROS to set PIGS
 
-#Calculate the difference between your expert opinion probability of ignition and the probability
-#of ignition derived from FCCS benchmark rate of spread predictions.
-pig_dif <- fbsc$cronan_pig - bros_pig
+#Convert benchmark ROS into probability of ignition (PIG)
+ms2_pig <- round(fbse$ms2_ros/max(fbse$ms2_ros),4)
 
-#Create a data frame that can be used for analysis.
-fbsd <- data.frame(fuelbed = fbsc$fuelbed, andreu_fuelbed_no = fbsc$andreu_fuelbed_no, 
-                   benchmark_ros = fbsc$benchmark_ros, fccs_pig = bros_pig, 
-                   cronan_pig = fbsc$probability_of_ignition, 
-                   diff_pig = fbsc$probability_of_ignition - bros_pig, 
-                   topo = fcc[,1], 
-                   cover = fcc[,3], treatment = fcc[,4], mfri = fcc[,5], age = fcc[,7])
-
-
-
+#Create a data frame with data through fuel moisture scenario 3.
+ms2.df <- data.frame(fuelbed = fbsc$fuelbed, 
+                     andreu_fuelbed_no = fbsc$andreu_fuelbed_no, 
+                     topo = fcc[,1], 
+                     cover = fcc[,3], 
+                     treatment = fcc[,4], 
+                     mfri = fcc[,5], 
+                     age = fcc[,7], 
+                     expected_pig = expected_pigs_v2, 
+                     benchmark_ros = fbsc$benchmark_ros, 
+                     benchmark_pig = benchmark_pig, 
+                     benchmark_dif = expected_pigs_v2 - benchmark_pig, 
+                     ms2_ros = fbse$ms2_ros, 
+                     ms2_pig = ms2_pig, 
+                     ms2_dif = expected_pigs_v2 - ms2_pig)
 
 ##############################################################################################################
 ##############################################################################################################
 ##############################################################################################################
 ##############################################################################################################
-#STEP 22: 
+#STEP 32: 
 #SELECTED NATURAL FUELS FOR NATURAL FUELBEDS ACROSS ALL TOPOGRAPHIC POSITIONS.
 
 #Subset selected natural fuelbeds by topographic position.
@@ -1492,37 +1568,37 @@ plotTitle <- c("Wet Flatlands",
                "Mesic Flatlands", 
                "Mesic Uplands", 
                "Xeric Uplands")
-wet_flatlands <- fbse[fbse$fuelbed %in% c(1011101:1011106, 
-                                          1011201:1011206, 
-                                          1011301:1011306, 
-                                          1031401:1031406),]
+wet_flatlands <- ms2.df[ms2.df$fuelbed %in% c(1011101:1011106, 
+                                              1011201:1011206, 
+                                              1011301:1011306, 
+                                              1031401:1031406),]
 wet_flatlands <- wet_flatlands[order(wet_flatlands$fuelbed),]
 
 #Mesic Flatlands
-mesic_flatlands <- fbse[fbse$fuelbed %in% c(2011101:2011106, 
-                                            2011201:2011206, 
-                                            2011301:2011306, 
-                                            2031401:2031406),]
+mesic_flatlands <- ms2.df[ms2.df$fuelbed %in% c(2011101:2011106, 
+                                                2011201:2011206, 
+                                                2011301:2011306, 
+                                                2031401:2031406),]
 mesic_flatlands <- mesic_flatlands[order(mesic_flatlands$fuelbed),]
 
 #Mesic Uplands
-mesic_uplands <- fbse[fbse$fuelbed %in% c(3011101:3011106, 
-                                          3011201:3011206, 
-                                          3011301:3011306, 
-                                          3031401:3031406),]
+mesic_uplands <- ms2.df[ms2.df$fuelbed %in% c(3011101:3011106, 
+                                              3011201:3011206, 
+                                              3011301:3011306, 
+                                              3031401:3031406),]
 mesic_uplands <- mesic_uplands[order(mesic_uplands$fuelbed),]
 
 #Xeric Uplands
-xeric_uplands <- fbse[fbse$fuelbed %in% c(4011101:4011106, 
-                                          4011201:4011206, 
-                                          4011301:4011306, 
-                                          4031401:4031406),]
+xeric_uplands <- ms2.df[ms2.df$fuelbed %in% c(4011101:4011106, 
+                                              4011201:4011206, 
+                                              4011301:4011306, 
+                                              4031401:4031406),]
 xeric_uplands <- xeric_uplands[order(xeric_uplands$fuelbed),]
 
 
 #ALL PLANTATION FUELBEDS IN ALL TOPOGRAPHIC POSITIONS
 dev.off()
-x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 6, plotTitle)
+x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 14, plotTitle)
 
 #Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
 #expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
@@ -1532,15 +1608,15 @@ x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 6, plotTitl
 
 ##############################################################################################################
 ##############################################################################################################
-#STEP 23: 
+#STEP 33: 
 #ALL NATURAL FUELBEDS IN WET FLATLANDS.
 
 #Subset all natural fuelbeds in wet flatlands fuelbeds.
 plotTitle <- c("Wet Flatlands -- Natural Fuelbeds")
-wet_flatlands <- fbse[fbse$topo == 1 & fbse$treatment == 1,]
+wet_flatlands <- ms2.df[ms2.df$topo == 1 & ms2.df$treatment == 1,]
 
 dev.off()
-x1plot(wet_flatlands, 6, plotTitle)
+x1plot(wet_flatlands, 14, plotTitle)
 
 #Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
 #expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
@@ -1550,15 +1626,15 @@ x1plot(wet_flatlands, 6, plotTitle)
 
 ##############################################################################################################
 ##############################################################################################################
-#STEP 24: 
+#STEP 34: 
 #ALL NATURAL FUELBEDS IN MESIC FLATLANDS.
 
 #Subset all natural fuelbeds for mesic flatlands
 plotTitle <- c("Mesic Flatlands -- Natural Fuelbeds")
-mesic_flatlands <- fbse[fbse$topo == 2 & fbse$treatment == 1,]
+mesic_flatlands <- ms2.df[ms2.df$topo == 2 & ms2.df$treatment == 1,]
 
 dev.off()
-x1plot(mesic_flatlands, 6, plotTitle)
+x1plot(mesic_flatlands, 14, plotTitle)
 
 #Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
 #expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
@@ -1568,15 +1644,15 @@ x1plot(mesic_flatlands, 6, plotTitle)
 
 ##############################################################################################################
 ##############################################################################################################
-#STEP 25: 
+#STEP 35: 
 #ALL NATURAL FUELBEDS IN MESIC UPLANDS.
 
 #Subset all natural fuelbeds for mesic uplands
 plotTitle <- c("Mesic Uplands -- Natural Fuelbeds")
-mesic_uplands <- fbse[fbse$topo == 3 & fbse$treatment == 1,]
+mesic_uplands <- ms2.df[ms2.df$topo == 3 & ms2.df$treatment == 1,]
 
 dev.off()
-x1plot(mesic_uplands, 6, plotTitle)
+x1plot(mesic_uplands, 14, plotTitle)
 
 #Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
 #expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
@@ -1586,15 +1662,15 @@ x1plot(mesic_uplands, 6, plotTitle)
 
 ##############################################################################################################
 ##############################################################################################################
-#STEP 26: 
+#STEP 36: 
 #ALL NATURAL FUELBEDS IN XERIC UPLANDS.
 
 #Subset all natural fuelbeds for xeric uplands
 plotTitle <- c("Xeric Uplands -- Natural Fuelbeds")
-xeric_uplands <- fbse[fbse$topo == 4 & fbse$treatment == 1,]
+xeric_uplands <- ms2.df[ms2.df$topo == 4 & ms2.df$treatment == 1,]
 
 dev.off()
-x1plot(xeric_uplands, 6, plotTitle)
+x1plot(xeric_uplands, 14, plotTitle)
 
 #Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
 #expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
@@ -1604,7 +1680,7 @@ x1plot(xeric_uplands, 6, plotTitle)
 
 ##############################################################################################################
 ##############################################################################################################
-#STEP 27: 
+#STEP 37: 
 #ALL PLANTATION FUELBEDS IN ALL TOPOGRAPHIC POSITIONS
 
 #Subset all plantation fuelbeds by topographic position.
@@ -1612,14 +1688,14 @@ plotTitle <- c("Wet Flatlands -- Plantations",
                "Mesic Flatlands -- Plantations", 
                "Mesic Uplands -- Plantations", 
                "Xeric Uplands -- Plantations")
-wet_flatlands <- fbse[fbse$topo == 1 & fbse$treatment == 5,]
-mesic_flatlands <- fbse[fbse$topo == 2 & fbse$treatment == 5,]
-mesic_uplands <- fbse[fbse$topo == 3 & fbse$treatment == 5,]
-xeric_uplands <- fbse[fbse$topo == 4 & fbse$treatment == 5,]
+wet_flatlands <- ms2.df[ms2.df$topo == 1 & ms2.df$treatment == 5,]
+mesic_flatlands <- ms2.df[ms2.df$topo == 2 & ms2.df$treatment == 5,]
+mesic_uplands <- ms2.df[ms2.df$topo == 3 & ms2.df$treatment == 5,]
+xeric_uplands <- ms2.df[ms2.df$topo == 4 & ms2.df$treatment == 5,]
 
 #ALL PLANTATION FUELBEDS IN ALL TOPOGRAPHIC POSITIONS
 dev.off()
-x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 6, plotTitle)
+x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 14, plotTitle)
 
 #Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
 #expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
@@ -1629,7 +1705,7 @@ x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 6, plotTitl
 
 ##############################################################################################################
 ##############################################################################################################
-#STEP 28: ALL RESTORATION FUELBEDS IN ALL NATURAL FUELBEDS FOR ALL TOPOGRAPHIC POSITIONS.
+#STEP 38: ALL RESTORATION FUELBEDS IN ALL NATURAL FUELBEDS FOR ALL TOPOGRAPHIC POSITIONS.
 #Evaluate the degree to which probability of ignition derived from FCCS rate of spread predictions
 #correlates with probability of ignition derived from Eglin staff meetings.
 
@@ -1637,11 +1713,11 @@ x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 6, plotTitl
 #Note ----- there are no restoration fuelbeds in wet or mesic flatlands
 plotTitle <- c("Mesic Uplands -- Restoration/Natural", 
                "Xeric Uplands -- Restoration/Natural")
-mesic_uplands <- fbse[fbse$topo == 3 & fbse$treatment %in% c(2,3,4),]
-xeric_uplands <- fbse[fbse$topo == 4 & fbse$treatment %in% c(2,3,4),]
+mesic_uplands <- ms2.df[ms2.df$topo == 3 & ms2.df$treatment %in% c(2,3,4),]
+xeric_uplands <- ms2.df[ms2.df$topo == 4 & ms2.df$treatment %in% c(2,3,4),]
 
 dev.off()
-x2plot(mesic_uplands, xeric_uplands, 6, plotTitle)
+x2plot(mesic_uplands, xeric_uplands, 14, plotTitle)
 
 #This output is much better than the first iteration (step 9).
 #As in step 9, there is the expected declining PIG as mfri lengthens, but there is also
@@ -1664,18 +1740,18 @@ x2plot(mesic_uplands, xeric_uplands, 6, plotTitle)
 
 #############################################################################################################
 ##############################################################################################################
-#STEP 29: 
+#STEP 39: 
 #ALL RESTORATION FUELBEDS IN ALL PLANTATION FOR ALL TOPOGRAPHIC POSITIONS.
 
 #Subset restoration fuelbeds derived from plantations
 #Note ----- there are no restoration fuelbeds in wet or mesic flatlands
 plotTitle <- c("Mesic Uplands -- Restoration/Plantations", 
                "Xeric Uplands -- Restoration/Plantations")
-mesic_uplands <- fbse[fbse$topo == 3 & fbse$treatment %in% c(6,7,8),]
-xeric_uplands <- fbse[fbse$topo == 4 & fbse$treatment %in% c(6,7,8),]
+mesic_uplands <- ms2.df[ms2.df$topo == 3 & ms2.df$treatment %in% c(6,7,8),]
+xeric_uplands <- ms2.df[ms2.df$topo == 4 & ms2.df$treatment %in% c(6,7,8),]
 
 dev.off()
-x2plot(mesic_uplands, xeric_uplands, 6, plotTitle)
+x2plot(mesic_uplands, xeric_uplands, 14, plotTitle)
 
 #This output is much better than the first iteration (step 9).
 #As in step 9, there is the expected declining PIG as mfri lengthens, but there is also
@@ -1703,10 +1779,10 @@ x2plot(mesic_uplands, xeric_uplands, 6, plotTitle)
 
 #############################################################################################################
 ##############################################################################################################
-#STEP 30: 
+#STEP 40: 
 #QUANTIFY THE DEGREE OF CORRESPONDANCE BETWEEN FCCS/PREDICTED ROS-DERIVED PIGS AND EXPECTED PIGS.
 #THIS WILL BE THE BASIS FOR EVALUATING ALL FUTURE FCCS/PREDICTED ROS-DERIVED PIGS
-plot(fbse$cronan_pig, fbse$fccd_pig)
+plot(ms2.df$expected_pig, ms2.df$ms2_pig)
 
 #Show the linear model. 
 #If FCCS/Predicted ROS-derived PIGS lined up perfectly with expected values the model parameters
@@ -1720,37 +1796,816 @@ plot(fbse$cronan_pig, fbse$fccd_pig)
 #with the initial system of using Benchmark fuel moistures for all FCCS fuelbed runs to derive
 #PIGS because fine fuels in a swamp will have much wetter fuels than fine fuels in an upland 
 #stand of longleaf pine under weather conditions suitable for prescribed burninng.
-model <- lm(fbse$fccd_pig ~ fbse$cronan_pig)
-summary(model)
+ms2.lm <- lm(ms2.df$ms2_pig ~ ms2.df$expected_pig)
+summary(ms2.lm)
+plot(ms2.lm)
+plot(ms2.df$expected_pig, ms2.df$ms2_pig)
+abline(ms2.lm)
 #Not even close
 
 #Quantify deviation from expected PIGS
-plot(fbse$pig_dev)
-
-#Create a data frame to track total deviation from expected PIGS
-ms <- data.frame(Moisture_Scenario = c(1,2,3,4,5,6,7,8,9), 
-                 WetFlatlands_Nat = seq(0,1,9), 
-                 MesicFlatlands_Nat = seq(0,1,9), 
-                 MesicUplands_Nat = seq(0,1,9), 
-                 XericUplands_Nat = seq(0,1,9), 
-                 WetFlatlands_Other = seq(0,1,9), 
-                 MesicFlatlands_Other = seq(0,1,9), 
-                 MesicUplands_Other = seq(0,1,9), 
-                 XericUplands_Other = seq(0,1,9), 
-                 Total = seq(0,1,9))
+plot(ms2.df$ms2_dif)
 
 #Populate data frame
-ms$WetFlatlands_Nat[1] <- round(sum(abs(fbse$pig_dev[fbse$topo == 1 & fbse$treatment == 1])),1)
-ms$MesicFlatlands_Nat[1] <- round(sum(abs(fbse$pig_dev[fbse$topo == 2 & fbse$treatment == 1])),1)
-ms$MesicUplands_Nat[1] <- round(sum(abs(fbse$pig_dev[fbse$topo == 3 & fbse$treatment == 1])),1)
-ms$XericUplands_Nat[1] <- round(sum(abs(fbse$pig_dev[fbse$topo == 4 & fbse$treatment == 1])),1)
-ms$WetFlatlands_Other[1] <- round(sum(abs(fbse$pig_dev[fbse$topo == 1 & fbse$treatment > 1])),1)
-ms$MesicFlatlands_Other[1] <- round(sum(abs(fbse$pig_dev[fbse$topo == 2 & fbse$treatment > 1])),1)
-ms$MesicUplands_Other[1] <- round(sum(abs(fbse$pig_dev[fbse$topo == 3 & fbse$treatment > 1])),1)
-ms$XericUplands_Other[1] <- round(sum(abs(fbse$pig_dev[fbse$topo == 4 & fbse$treatment > 1])),1)
-ms$Total[1] <- round(sum(abs(fbse$pig_dev)),1)
+scenario <- 2
+ms$WetFlatlands_Nat[scenario] <- round(sum(abs(ms2.df$ms2_dif[ms2.df$topo == 1 & ms2.df$treatment == 1])),1)
+ms$MesicFlatlands_Nat[scenario] <- round(sum(abs(ms2.df$ms2_dif[ms2.df$topo == 2 & ms2.df$treatment == 1])),1)
+ms$MesicUplands_Nat[scenario] <- round(sum(abs(ms2.df$ms2_dif[ms2.df$topo == 3 & ms2.df$treatment == 1])),1)
+ms$XericUplands_Nat[scenario] <- round(sum(abs(ms2.df$ms2_dif[ms2.df$topo == 4 & ms2.df$treatment == 1])),1)
+ms$WetFlatlands_Other[scenario] <- round(sum(abs(ms2.df$ms2_dif[ms2.df$topo == 1 & ms2.df$treatment > 1])),1)
+ms$MesicFlatlands_Other[scenario] <- round(sum(abs(ms2.df$ms2_dif[ms2.df$topo == 2 & ms2.df$treatment > 1])),1)
+ms$MesicUplands_Other[scenario] <- round(sum(abs(ms2.df$ms2_dif[ms2.df$topo == 3 & ms2.df$treatment > 1])),1)
+ms$XericUplands_Other[scenario] <- round(sum(abs(ms2.df$ms2_dif[ms2.df$topo == 4 & ms2.df$treatment > 1])),1)
+ms$Total[scenario] <- round(sum(abs(ms2.df$ms2_dif)),1)
 
 ms
+#RESULT: FUEL MOISTURE SCENARIO 2 WORKS A LITTLE BETTER THAN SCENARIO 1
+#SOLUTION: CREATE MULTIPLE FUEL MOISTURE GROUPS BASED ON TOPOGRAPHIC POSITION AND MFRI
+
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
 
 
-sum(abs(fbse$pig_dev))
+#                                       FUEL MOISTURE SCENARIO 3 -- ITERATION 1
+#SUBTRACT BENCHMARK ROS-DERIVED PIGS FROM SYSTEMATICALLY-DERIVED PIGS AND EVALUATE DEGREE
+#OF CORRELATION
+#s3i1
+
+
+
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+
+##############################################################################################################
+##############################################################################################################
+#STEP 41: LOAD & TEST DATA
+
+#Load initial FCCS fire behavior predictions.
+#Fuel Moisture scenario -- 1
+#Transformations -- None
+fccs_fireBehavior <- read.table("inputs/fccs_ros_moistScenario_3_tansformation_none.csv", 
+                                header=TRUE, sep=",", na.strings="NA", dec=".", strip.white=TRUE)
+
+#Condense this table to fuelbeds and rate of spread predictions
+#First recode the five digit fuelbed number to a seven digit number.
+ch.fb <- as.character(fccs_fireBehavior$Fuelbed_number)
+ch.fb_re <- mapply(function(y) {recode(y)}, ch.fb)
+ch.fb_reNu <- as.numeric(ch.fb_re)
+ros <- data.frame(fuelbed = ch.fb_reNu, ms3_ros = fccs_fireBehavior$Custom_ROS)
+
+#Merge Andreu's fuelbeds and model-derived ROS predictions into the complete list of Eglin Fuelbeds
+fbsd <- merge(fbsc, ros, by.x = "andreu_fuelbed_no", by.y = "fuelbed")
+fbse <- fbsd[order(fbsd$fuelbed),]
+
+#Before you apply the max Moisture Scenario 3 ROS to determine PIGs look at their distribution. 
+barplot(fbse$ms3_ros)
+#Looks good. The last fuelbed (Rangeland) has the highest ROS and it is not dramatically higher than
+#others. Use rangeland as the max ROS to set PIGS
+
+#Convert benchmark ROS into probability of ignition (PIG)
+ms3_pig <- round(fbse$ms3_ros/max(fbse$ms3_ros),4)
+
+#Create a data frame with data through fuel moisture scenario 3.
+ms3.df <- data.frame(fuelbed = fbsc$fuelbed, 
+                     andreu_fuelbed_no = fbsc$andreu_fuelbed_no, 
+                     topo = fcc[,1], 
+                     cover = fcc[,3], 
+                     treatment = fcc[,4], 
+                     mfri = fcc[,5], 
+                     age = fcc[,7], 
+                     expected_pig = expected_pigs_v2, 
+                     benchmark_ros = fbsc$benchmark_ros, 
+                     benchmark_pig = benchmark_pig, 
+                     benchmark_dif = expected_pigs_v2 - benchmark_pig, 
+                     ms3_ros = fbsd$ms3_ros, 
+                     ms3_pig = ms3_pig, 
+                     ms3_dif = expected_pigs_v2 - ms3_pig)
+
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+#STEP 42: 
+#SELECTED NATURAL FUELS FOR NATURAL FUELBEDS ACROSS ALL TOPOGRAPHIC POSITIONS.
+
+#Subset selected natural fuelbeds by topographic position.
+#Wet Flatlands
+plotTitle <- c("Wet Flatlands", 
+               "Mesic Flatlands", 
+               "Mesic Uplands", 
+               "Xeric Uplands")
+wet_flatlands <- ms3.df[ms3.df$fuelbed %in% c(1011101:1011106, 
+                                          1011201:1011206, 
+                                          1011301:1011306, 
+                                          1031401:1031406),]
+wet_flatlands <- wet_flatlands[order(wet_flatlands$fuelbed),]
+
+#Mesic Flatlands
+mesic_flatlands <- ms3.df[ms3.df$fuelbed %in% c(2011101:2011106, 
+                                            2011201:2011206, 
+                                            2011301:2011306, 
+                                            2031401:2031406),]
+mesic_flatlands <- mesic_flatlands[order(mesic_flatlands$fuelbed),]
+
+#Mesic Uplands
+mesic_uplands <- ms3.df[ms3.df$fuelbed %in% c(3011101:3011106, 
+                                          3011201:3011206, 
+                                          3011301:3011306, 
+                                          3031401:3031406),]
+mesic_uplands <- mesic_uplands[order(mesic_uplands$fuelbed),]
+
+#Xeric Uplands
+xeric_uplands <- ms3.df[ms3.df$fuelbed %in% c(4011101:4011106, 
+                                          4011201:4011206, 
+                                          4011301:4011306, 
+                                          4031401:4031406),]
+xeric_uplands <- xeric_uplands[order(xeric_uplands$fuelbed),]
+
+
+#ALL PLANTATION FUELBEDS IN ALL TOPOGRAPHIC POSITIONS
+dev.off()
+x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 14, plotTitle)
+
+#Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
+#expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
+#are higher than expected.
+
+#NEXT STEP, LOOK AT WIDER RANGE OF FUELBEDS IN EACH TOPOGRAPHIC POSITION; START WITH WET FLATLANDS
+
+##############################################################################################################
+##############################################################################################################
+#STEP 43: 
+#ALL NATURAL FUELBEDS IN WET FLATLANDS.
+
+#Subset all natural fuelbeds in wet flatlands fuelbeds.
+plotTitle <- c("Wet Flatlands -- Natural Fuelbeds")
+wet_flatlands <- ms3.df[ms3.df$topo == 1 & ms3.df$treatment == 1,]
+
+dev.off()
+x1plot(wet_flatlands, 14, plotTitle)
+
+#Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
+#expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
+#are higher than expected. The only exception are titi swamps.
+
+#NEXT STEP, LOOK AT WIDER RANGE OF FUELBEDS IN MESIC FLATLANDS
+
+##############################################################################################################
+##############################################################################################################
+#STEP 44: 
+#ALL NATURAL FUELBEDS IN MESIC FLATLANDS.
+
+#Subset all natural fuelbeds for mesic flatlands
+plotTitle <- c("Mesic Flatlands -- Natural Fuelbeds")
+mesic_flatlands <- ms3.df[ms3.df$topo == 2 & ms3.df$treatment == 1,]
+
+dev.off()
+x1plot(mesic_flatlands, 14, plotTitle)
+
+#Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
+#expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
+#are higher than expected.
+
+#NEXT STEP, LOOK AT WIDER RANGE OF FUELBEDS IN MESIC UPLANDS
+
+##############################################################################################################
+##############################################################################################################
+#STEP 45: 
+#ALL NATURAL FUELBEDS IN MESIC UPLANDS.
+
+#Subset all natural fuelbeds for mesic uplands
+plotTitle <- c("Mesic Uplands -- Natural Fuelbeds")
+mesic_uplands <- ms3.df[ms3.df$topo == 3 & ms3.df$treatment == 1,]
+
+dev.off()
+x1plot(mesic_uplands, 14, plotTitle)
+
+#Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
+#expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
+#are higher than expected.
+
+#NEXT STEP, LOOK AT WIDER RANGE OF FUELBEDS IN XERIC UPLANDS
+
+##############################################################################################################
+##############################################################################################################
+#STEP 46: 
+#ALL NATURAL FUELBEDS IN XERIC UPLANDS.
+
+#Subset all natural fuelbeds for xeric uplands
+plotTitle <- c("Xeric Uplands -- Natural Fuelbeds")
+xeric_uplands <- ms3.df[ms3.df$topo == 4 & ms3.df$treatment == 1,]
+
+dev.off()
+x1plot(xeric_uplands, 14, plotTitle)
+
+#Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
+#expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
+#are higher than expected.
+
+#NEXT STEP, LOOK AT WIDER RANGE OF FUELBEDS IN  PLANTATIONS
+
+##############################################################################################################
+##############################################################################################################
+#STEP 47: 
+#ALL PLANTATION FUELBEDS IN ALL TOPOGRAPHIC POSITIONS
+
+#Subset all plantation fuelbeds by topographic position.
+plotTitle <- c("Wet Flatlands -- Plantations", 
+               "Mesic Flatlands -- Plantations", 
+               "Mesic Uplands -- Plantations", 
+               "Xeric Uplands -- Plantations")
+wet_flatlands <- ms3.df[ms3.df$topo == 1 & ms3.df$treatment == 5,]
+mesic_flatlands <- ms3.df[ms3.df$topo == 2 & ms3.df$treatment == 5,]
+mesic_uplands <- ms3.df[ms3.df$topo == 3 & ms3.df$treatment == 5,]
+xeric_uplands <- ms3.df[ms3.df$topo == 4 & ms3.df$treatment == 5,]
+
+#ALL PLANTATION FUELBEDS IN ALL TOPOGRAPHIC POSITIONS
+dev.off()
+x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 14, plotTitle)
+
+#Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
+#expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
+#are higher than expected.
+
+#NEXT STEP, LOOK AT HOW PIGS CHANGE ACROSS RESTORATION TREATMENTS IN NATURAL FUELS
+
+##############################################################################################################
+##############################################################################################################
+#STEP 48: ALL RESTORATION FUELBEDS IN ALL NATURAL FUELBEDS FOR ALL TOPOGRAPHIC POSITIONS.
+#Evaluate the degree to which probability of ignition derived from FCCS rate of spread predictions
+#correlates with probability of ignition derived from Eglin staff meetings.
+
+#Subset restoration fuelbeds derived from natural fuels
+#Note ----- there are no restoration fuelbeds in wet or mesic flatlands
+plotTitle <- c("Mesic Uplands -- Restoration/Natural", 
+               "Xeric Uplands -- Restoration/Natural")
+mesic_uplands <- ms3.df[ms3.df$topo == 3 & ms3.df$treatment %in% c(2,3,4),]
+xeric_uplands <- ms3.df[ms3.df$topo == 4 & ms3.df$treatment %in% c(2,3,4),]
+
+dev.off()
+x2plot(mesic_uplands, xeric_uplands, 14, plotTitle)
+
+#This output is much better than the first iteration (step 9).
+#As in step 9, there is the expected declining PIG as mfri lengthens, but there is also
+#the expected low PIG in young stands.
+
+#Trends are not quite as expected in step 10 (first iteration)
+#1) Post-thinning should have low PIGs >> they are too high
+#2) Post-herbicide should have PIGs near zero >> this is the case.
+#3) Herbicide recovery should have high PIGs >> this is the case.
+
+#Systematic PIG Improvements
+#1) Post-thinning PIGs are now very low. As expected.
+#2) No change. these were fine in the first iteration.
+#3) No change. these were fine in the first iteration.
+
+#Although not a major driver (restoration treatment is), trends for mFRI and stand age are 
+#improved over the first iteration.
+
+#NEXT STEP, LOOK AT HOW PIGS CHANGE ACROSS RESTORATION TREATMENTS IN PLANTATION FUELS
+
+#############################################################################################################
+##############################################################################################################
+#STEP 49: 
+#ALL RESTORATION FUELBEDS IN ALL PLANTATION FOR ALL TOPOGRAPHIC POSITIONS.
+
+#Subset restoration fuelbeds derived from plantations
+#Note ----- there are no restoration fuelbeds in wet or mesic flatlands
+plotTitle <- c("Mesic Uplands -- Restoration/Plantations", 
+               "Xeric Uplands -- Restoration/Plantations")
+mesic_uplands <- ms3.df[ms3.df$topo == 3 & ms3.df$treatment %in% c(6,7,8),]
+xeric_uplands <- ms3.df[ms3.df$topo == 4 & ms3.df$treatment %in% c(6,7,8),]
+
+dev.off()
+x2plot(mesic_uplands, xeric_uplands, 14, plotTitle)
+
+#This output is much better than the first iteration (step 9).
+#As in step 9, there is the expected declining PIG as mfri lengthens, but there is also
+#the expected low PIG in young stands.
+
+#Trends are not quite as expected in step 10 (first iteration)
+#1) Post-thinning should have low PIGs >> they are too high
+#2) Post-herbicide should have PIGs near zero >> this is the case.
+#3) Herbicide recovery should have high PIGs >> this is the case.
+
+#Systematic PIG Improvements
+#1) Post-thinning PIGs are now very low. As expected.
+#2) No change. these were fine in the first iteration.
+#3) No change. these were fine in the first iteration.
+
+#Although not a major driver (restoration treatment is), trends for mFRI and stand age are 
+#improved over the first iteration.
+
+############
+#Start here
+#1) Redo systematic PIG calcs so max is one -- currently they can multiply to > 1
+#2) Fix salt march PIG in fccs-derived values
+#3) Use deviation from expected values to identify patterns in fccs-derived values that
+#   are largest.
+
+#############################################################################################################
+##############################################################################################################
+#STEP 50: 
+#QUANTIFY THE DEGREE OF CORRESPONDANCE BETWEEN FCCS/PREDICTED ROS-DERIVED PIGS AND EXPECTED PIGS.
+#THIS WILL BE THE BASIS FOR EVALUATING ALL FUTURE FCCS/PREDICTED ROS-DERIVED PIGS
+plot(ms3.df$expected_pig, ms3.df$ms3_pig)
+
+#Show the linear model. 
+#If FCCS/Predicted ROS-derived PIGS lined up perfectly with expected values the model parameters
+#would be:
+#Slope:       1
+#Intercept:   0
+#R-Squared:   1
+#p-value:     0
+#The goal here is not to fit the model-derived PIGs to expected pigs, but to use the expected PIGS
+#as a standard to judge improvements in the model-derived PIGS. We know there are major problems
+#with the initial system of using Benchmark fuel moistures for all FCCS fuelbed runs to derive
+#PIGS because fine fuels in a swamp will have much wetter fuels than fine fuels in an upland 
+#stand of longleaf pine under weather conditions suitable for prescribed burninng.
+ms3.lm <- lm(ms3.df$ms3_pig ~ ms3.df$expected_pig)
+summary(ms3.lm)
+plot(ms3.df$expected_pig, ms3.df$ms3_pig)
+abline(ms3.lm)
+#Not even close
+
+#Quantify deviation from expected PIGS
+plot(ms3.df$ms3_dif)
+
+#Populate data frame
+scenario <- 3
+ms$WetFlatlands_Nat[scenario] <- round(sum(abs(ms3.df$ms3_dif[ms3.df$topo == 1 & ms3.df$treatment == 1])),1)
+ms$MesicFlatlands_Nat[scenario] <- round(sum(abs(ms3.df$ms3_dif[ms3.df$topo == 2 & ms3.df$treatment == 1])),1)
+ms$MesicUplands_Nat[scenario] <- round(sum(abs(ms3.df$ms3_dif[ms3.df$topo == 3 & ms3.df$treatment == 1])),1)
+ms$XericUplands_Nat[scenario] <- round(sum(abs(ms3.df$ms3_dif[ms3.df$topo == 4 & ms3.df$treatment == 1])),1)
+ms$WetFlatlands_Other[scenario] <- round(sum(abs(ms3.df$ms3_dif[ms3.df$topo == 1 & ms3.df$treatment > 1])),1)
+ms$MesicFlatlands_Other[scenario] <- round(sum(abs(ms3.df$ms3_dif[ms3.df$topo == 2 & ms3.df$treatment > 1])),1)
+ms$MesicUplands_Other[scenario] <- round(sum(abs(ms3.df$ms3_dif[ms3.df$topo == 3 & ms3.df$treatment > 1])),1)
+ms$XericUplands_Other[scenario] <- round(sum(abs(ms3.df$ms3_dif[ms3.df$topo == 4 & ms3.df$treatment > 1])),1)
+ms$Total[scenario] <- round(sum(abs(ms3.df$ms3_dif)),1)
+
+ms
+#RESULT: FUEL MOISTURE SCENARIO 3 IS BETTER THAN 2 (SLOPE INCREASES, INTERCEPT DECREASES, 
+#R-SQUARED INCREASES, AND DIFFERENCES FROM EXPECTED DECREASE FOR ALL GROUPS EXCEPT MANAGED
+#UPLANDS)
+#SOLUTION: REVIEW DIFFERENCES MORE CLOSELY AND THEN CONSIDER REVISING GROUPS TO DECREASE
+#THE DIFFERENCE FROM EXPECTED FURTHER.
+
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+
+
+#                                       FUEL MOISTURE SCENARIO 3 -- ITERATION 2
+#s3i2
+
+
+
+
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+
+##############################################################################################################
+##############################################################################################################
+#STEP 51: CALCULATE DIFFERENCE BETWEEN MS2 AND MS3 PIGS
+
+#Create a data frame with data through fuel moisture scenario 3.
+ms3.df_v2 <- data.frame(fuelbed = fbsc$fuelbed, 
+                     andreu_fuelbed_no = fbsc$andreu_fuelbed_no, 
+                     topo = fcc[,1], 
+                     cover = fcc[,3], 
+                     treatment = fcc[,4], 
+                     mfri = fcc[,5], 
+                     age = fcc[,7], 
+                     expected_pig = expected_pigs_v2, 
+                     benchmark_ros = fbsc$benchmark_ros, 
+                     benchmark_pig = benchmark_pig, 
+                     benchmark_dif = expected_pigs_v2 - benchmark_pig, 
+                     ms3_ros = fbsd$ms3_ros, 
+                     ms3_pig = ms3_pig, 
+                     ms3_dif = expected_pigs_v2 - ms3_pig,
+                     ms2_dif = expected_pigs_v2 - ms2.df$ms2_pig)
+
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+#STEP 52: 
+#SELECTED NATURAL FUELS FOR NATURAL FUELBEDS ACROSS FLATLANDS.
+
+#Subset selected natural fuelbeds by topographic position.
+
+plotTitle <- c("Wet Flatlands--ms2", 
+               "Wet Flatlands--ms3",
+               "Mesic Flatlands--ms2", 
+               "Mesic Flatlands--ms3")
+
+#Wet Flatlands -- ms 2
+wet_flatlands <- ms3.df_v2[ms3.df_v2$fuelbed %in% c(1011101:1011106, 
+                                              1011201:1011206, 
+                                              1011301:1011306, 
+                                              1031401:1031406),]
+wet_flatlands <- wet_flatlands[order(wet_flatlands$fuelbed),]
+
+#Mesic Flatlands -- m2 2
+mesic_flatlands <- ms3.df_v2[ms3.df_v2$fuelbed %in% c(2011101:2011106, 
+                                                2011201:2011206, 
+                                                2011301:2011306, 
+                                                2031401:2031406),]
+mesic_flatlands <- mesic_flatlands[order(mesic_flatlands$fuelbed),]
+
+
+dev.off()
+x4plot_compare(wet_flatlands, mesic_flatlands, 15, 14, plotTitle)
+
+#Wet Flatlands
+#Improvement over ms2 comes in large gains in pigs for unburned longleaf pine and
+#gains for young stands of 4-8 and 9-20 mfri longleaf pine
+#Declines occur in older stands with frequent to some burning and younger frequently 
+#burned stands. 
+#The group number for 1-3 and 4-8 mfri longleaf is too high. Fire behavior in older stands
+#should have increased, but you decreased it by increasing fuel moistures. Must find a 
+#way to do this while continuing to reduce fire behavior in younger stands, which should not
+#have enough fuel to burn. Perhaps do the them what you did to uplands. They have dense
+#fine fuel bulk density
+
+#Mesic flatlands
+#Similar trends to wet flatlands, but not as pronounced.
+
+
+
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+##############################################################################################################
+#STEP 53: 
+#SELECTED NATURAL FUELS FOR NATURAL FUELBEDS ACROSS ALL TOPOGRAPHIC POSITIONS.
+
+#Subset selected natural fuelbeds by topographic position.
+plotTitle <- c("Mesic Uplands--ms2", 
+               "Mesic Uplands--ms3", 
+               "Xeric Uplands--ms2", 
+               "Xeric Uplands--ms3")
+
+#Mesic Uplands
+mesic_uplands <- ms3.df_v2[ms3.df_v2$fuelbed %in% c(3011101:3011106, 
+                                                    3011201:3011206, 
+                                                    3011301:3011306, 
+                                                    3031401:3031406),]
+mesic_uplands <- mesic_uplands[order(mesic_uplands$fuelbed),]
+
+#Xeric Uplands
+xeric_uplands <- ms3.df_v2[ms3.df_v2$fuelbed %in% c(4011101:4011106, 
+                                                    4011201:4011206, 
+                                                    4011301:4011306, 
+                                                    4031401:4031406),]
+xeric_uplands <- xeric_uplands[order(xeric_uplands$fuelbed),]
+
+
+dev.off()
+x4plot_compare(mesic_uplands, xeric_uplands, 15, 14, plotTitle)
+
+#Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
+#expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
+#are higher than expected.
+
+#NEXT STEP, LOOK AT WIDER RANGE OF FUELBEDS IN EACH TOPOGRAPHIC POSITION; START WITH WET FLATLANDS
+
+
+##############################################################################################################
+##############################################################################################################
+#STEP 53: 
+#ALL NATURAL FUELBEDS IN WET FLATLANDS.
+
+#Subset all natural fuelbeds in wet flatlands fuelbeds.
+plotTitle <- c("Wet Flatlands -- Natural Fuelbeds")
+wet_flatlands <- ms3.df_v2[ms3.df_v2$topo == 1 & ms3.df_v2$treatment == 1,]
+
+dev.off()
+x1plot(wet_flatlands, 14, plotTitle)
+
+#Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
+#expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
+#are higher than expected. The only exception are titi swamps.
+
+#NEXT STEP, LOOK AT WIDER RANGE OF FUELBEDS IN MESIC FLATLANDS
+
+##############################################################################################################
+##############################################################################################################
+#STEP 54: 
+#ALL NATURAL FUELBEDS IN MESIC FLATLANDS.
+
+#Subset all natural fuelbeds for mesic flatlands
+plotTitle <- c("Mesic Flatlands -- Natural Fuelbeds")
+mesic_flatlands <- ms3.df_v2[ms3.df_v2$topo == 2 & ms3.df_v2$treatment == 1,]
+
+dev.off()
+x1plot(mesic_flatlands, 15, plotTitle)
+
+#Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
+#expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
+#are higher than expected.
+
+#NEXT STEP, LOOK AT WIDER RANGE OF FUELBEDS IN MESIC UPLANDS
+
+##############################################################################################################
+##############################################################################################################
+#STEP 55: 
+#ALL NATURAL FUELBEDS IN MESIC UPLANDS.
+
+#Subset all natural fuelbeds for mesic uplands
+plotTitle <- c("Mesic Uplands -- Natural Fuelbeds")
+mesic_uplands <- ms3.df_v2[ms3.df_v2$topo == 3 & ms3.df_v2$treatment == 1,]
+
+dev.off()
+x1plot(mesic_uplands, 14, plotTitle)
+
+#Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
+#expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
+#are higher than expected.
+
+#NEXT STEP, LOOK AT WIDER RANGE OF FUELBEDS IN XERIC UPLANDS
+
+##############################################################################################################
+##############################################################################################################
+#STEP 56: 
+#ALL NATURAL FUELBEDS IN XERIC UPLANDS.
+
+#Subset all natural fuelbeds for xeric uplands
+plotTitle <- c("Xeric Uplands -- Natural Fuelbeds")
+xeric_uplands <- ms3.df_v2[ms3.df_v2$topo == 4 & ms3.df_v2$treatment == 1,]
+
+dev.off()
+x1plot(xeric_uplands, 15, plotTitle)
+
+#Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
+#expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
+#are higher than expected.
+
+#NEXT STEP, LOOK AT WIDER RANGE OF FUELBEDS IN  PLANTATIONS
+
+##############################################################################################################
+##############################################################################################################
+#STEP 57: 
+#ALL PLANTATION FUELBEDS IN ALL TOPOGRAPHIC POSITIONS
+
+#Subset all plantation fuelbeds by topographic position.
+plotTitle <- c("Wet Flatlands -- Plantations", 
+               "Mesic Flatlands -- Plantations", 
+               "Mesic Uplands -- Plantations", 
+               "Xeric Uplands -- Plantations")
+wet_flatlands <- ms3.df_v2[ms3.df_v2$topo == 1 & ms3.df_v2$treatment == 5,]
+mesic_flatlands <- ms3.df_v2[ms3.df_v2$topo == 2 & ms3.df_v2$treatment == 5,]
+mesic_uplands <- ms3.df_v2[ms3.df_v2$topo == 3 & ms3.df_v2$treatment == 5,]
+xeric_uplands <- ms3.df_v2[ms3.df_v2$topo == 4 & ms3.df_v2$treatment == 5,]
+
+#ALL PLANTATION FUELBEDS IN ALL TOPOGRAPHIC POSITIONS
+dev.off()
+x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 14, plotTitle)
+
+#Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
+#expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
+#are higher than expected.
+
+#NEXT STEP, LOOK AT HOW PIGS CHANGE ACROSS RESTORATION TREATMENTS IN NATURAL FUELS
+
+##############################################################################################################
+##############################################################################################################
+#STEP 58: ALL RESTORATION FUELBEDS IN ALL NATURAL FUELBEDS FOR ALL TOPOGRAPHIC POSITIONS.
+#Evaluate the degree to which probability of ignition derived from FCCS rate of spread predictions
+#correlates with probability of ignition derived from Eglin staff meetings.
+
+#Subset restoration fuelbeds derived from natural fuels
+#Note ----- there are no restoration fuelbeds in wet or mesic flatlands
+plotTitle <- c("Mesic Uplands -- Restoration/Natural", 
+               "Xeric Uplands -- Restoration/Natural")
+mesic_uplands <- ms3.df_v2[ms3.df_v2$topo == 3 & ms3.df_v2$treatment %in% c(2,3,4),]
+xeric_uplands <- ms3.df_v2[ms3.df_v2$topo == 4 & ms3.df_v2$treatment %in% c(2,3,4),]
+
+dev.off()
+x2plot(mesic_uplands, xeric_uplands, 15, plotTitle)
+
+#This output is much better than the first iteration (step 9).
+#As in step 9, there is the expected declining PIG as mfri lengthens, but there is also
+#the expected low PIG in young stands.
+
+#Trends are not quite as expected in step 10 (first iteration)
+#1) Post-thinning should have low PIGs >> they are too high
+#2) Post-herbicide should have PIGs near zero >> this is the case.
+#3) Herbicide recovery should have high PIGs >> this is the case.
+
+#Systematic PIG Improvements
+#1) Post-thinning PIGs are now very low. As expected.
+#2) No change. these were fine in the first iteration.
+#3) No change. these were fine in the first iteration.
+
+#Although not a major driver (restoration treatment is), trends for mFRI and stand age are 
+#improved over the first iteration.
+
+#NEXT STEP, LOOK AT HOW PIGS CHANGE ACROSS RESTORATION TREATMENTS IN PLANTATION FUELS
+
+#############################################################################################################
+##############################################################################################################
+#STEP 59: 
+#ALL RESTORATION FUELBEDS IN ALL PLANTATION FOR ALL TOPOGRAPHIC POSITIONS.
+
+#Subset restoration fuelbeds derived from plantations
+#Note ----- there are no restoration fuelbeds in wet or mesic flatlands
+plotTitle <- c("Mesic Uplands -- Restoration/Plantations", 
+               "Xeric Uplands -- Restoration/Plantations")
+mesic_uplands <- ms3.df_v2[ms3.df_v2$topo == 3 & ms3.df_v2$treatment %in% c(6,7,8),]
+xeric_uplands <- ms3.df_v2[ms3.df_v2$topo == 4 & ms3.df_v2$treatment %in% c(6,7,8),]
+
+dev.off()
+x2plot(mesic_uplands, xeric_uplands, 14, plotTitle)
+
+#This output is much better than the first iteration (step 9).
+#As in step 9, there is the expected declining PIG as mfri lengthens, but there is also
+#the expected low PIG in young stands.
+
+#Trends are not quite as expected in step 10 (first iteration)
+#1) Post-thinning should have low PIGs >> they are too high
+#2) Post-herbicide should have PIGs near zero >> this is the case.
+#3) Herbicide recovery should have high PIGs >> this is the case.
+
+#Systematic PIG Improvements
+#1) Post-thinning PIGs are now very low. As expected.
+#2) No change. these were fine in the first iteration.
+#3) No change. these were fine in the first iteration.
+
+#Although not a major driver (restoration treatment is), trends for mFRI and stand age are 
+#improved over the first iteration.
+
+############
+#Start here
+#1) Redo systematic PIG calcs so max is one -- currently they can multiply to > 1
+#2) Fix salt march PIG in fccs-derived values
+#3) Use deviation from expected values to identify patterns in fccs-derived values that
+#   are largest.
+
+#############################################################################################################
+##############################################################################################################
+#STEP 60: 
+#QUANTIFY THE DEGREE OF CORRESPONDANCE BETWEEN FCCS/PREDICTED ROS-DERIVED PIGS AND EXPECTED PIGS.
+#THIS WILL BE THE BASIS FOR EVALUATING ALL FUTURE FCCS/PREDICTED ROS-DERIVED PIGS
+plot(ms3.df_v2$expected_pig, ms3.df_v2$ms3_pig)
+
+#Show the linear model. 
+#If FCCS/Predicted ROS-derived PIGS lined up perfectly with expected values the model parameters
+#would be:
+#Slope:       1
+#Intercept:   0
+#R-Squared:   1
+#p-value:     0
+#The goal here is not to fit the model-derived PIGs to expected pigs, but to use the expected PIGS
+#as a standard to judge improvements in the model-derived PIGS. We know there are major problems
+#with the initial system of using Benchmark fuel moistures for all FCCS fuelbed runs to derive
+#PIGS because fine fuels in a swamp will have much wetter fuels than fine fuels in an upland 
+#stand of longleaf pine under weather conditions suitable for prescribed burninng.
+ms3.lm <- lm(ms3.df_v2$ms3_pig ~ ms3.df_v2$expected_pig)
+summary(ms3.lm)
+plot(ms3.df_v2$expected_pig, ms3.df$ms3_pig)
+abline(ms3.lm)
+#Not even close
+
+#Quantify deviation from expected PIGS
+plot(ms3.df$ms3_dif)
+
+#Populate data frame
+scenario <- 3
+ms$WetFlatlands_Nat[scenario] <- round(sum(abs(ms3.df$ms3_dif[ms3.df$topo == 1 & ms3.df$treatment == 1])),1)
+ms$MesicFlatlands_Nat[scenario] <- round(sum(abs(ms3.df$ms3_dif[ms3.df$topo == 2 & ms3.df$treatment == 1])),1)
+ms$MesicUplands_Nat[scenario] <- round(sum(abs(ms3.df$ms3_dif[ms3.df$topo == 3 & ms3.df$treatment == 1])),1)
+ms$XericUplands_Nat[scenario] <- round(sum(abs(ms3.df$ms3_dif[ms3.df$topo == 4 & ms3.df$treatment == 1])),1)
+ms$WetFlatlands_Other[scenario] <- round(sum(abs(ms3.df$ms3_dif[ms3.df$topo == 1 & ms3.df$treatment > 1])),1)
+ms$MesicFlatlands_Other[scenario] <- round(sum(abs(ms3.df$ms3_dif[ms3.df$topo == 2 & ms3.df$treatment > 1])),1)
+ms$MesicUplands_Other[scenario] <- round(sum(abs(ms3.df$ms3_dif[ms3.df$topo == 3 & ms3.df$treatment > 1])),1)
+ms$XericUplands_Other[scenario] <- round(sum(abs(ms3.df$ms3_dif[ms3.df$topo == 4 & ms3.df$treatment > 1])),1)
+ms$Total[scenario] <- round(sum(abs(ms3.df$ms3_dif)),1)
+
+ms
+#RESULT: FUEL MOISTURE SCENARIO 2 WORKS A LITTLE BETTER THAN SCENARIO 1
+
+
+
+
+
+
