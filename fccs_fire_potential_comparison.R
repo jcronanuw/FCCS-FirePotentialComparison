@@ -293,7 +293,7 @@ x4plot <- function(a,b,c,d,x,z)
   popViewport(3)
 }
 
-x1_comparison <- function(a, v, w, z)
+x1_comparison <- function(a, v, w, z, ymin, ymax)
 {
   #a = object with deviation from expected PIG values
   #v = previous iteration of deviation from expected PIGS (i.e., baseline
@@ -315,7 +315,7 @@ x1_comparison <- function(a, v, w, z)
                   col = mapply(function(y) colors_fr[y+1], a$mfri), 
                   names.arg = NULL, 
                   main = z, 
-                  ylim = c(-1,1))
+                  ylim = c(ymin,ymax))
   vps <- baseViewports()
   pushViewport(vps$inner, vps$figure, vps$plot)
   grid.text(as.character(a$fuelbed), 
@@ -331,7 +331,7 @@ x1_comparison <- function(a, v, w, z)
                   angle = 45, 
                   border = "black", 
                   names.arg = NULL, 
-                  ylim = c(-1,1))
+                  ylim = c(ymin,ymax))
 }
 
 ##############################################################################################################
@@ -358,10 +358,11 @@ lut <- read.table("C:/Users/jcronan/Documents/GitHub/EglinAirForceBase/inputs/se
 
 #Compare fuelbeds from your synchroncity table with the most recent copy from the FDM repository.
 #This ensures you are not working with a dated copy.
-all.equal(fbsb$fuelbed, lut$fuelbed)
+all.equal(fbsa$fuelbed, lut$fuelbed)
 
 #Remove dummy fuelbeds
 fbsb <- fbsa[!is.na(fbsa$andreu_fuelbed_no) == T,]
+
 
 #Break fuelbeds into component parts and create a dataframe that will be source for visualizations.
 fca <- as.character(fbsb$fuelbed)
@@ -464,7 +465,6 @@ pig.df <- data.frame(fuelbed = fbsb$fuelbed,
 ##############################################################################################################
 #STEP 4 
 #SELECTED NATURAL FUELS FOR NATURAL FUELBEDS ACROSS ALL TOPOGRAPHIC POSITIONS.
-dev.off()
 
 #Object to handle title names
 plotTitle <- vector()
@@ -526,7 +526,6 @@ x1plot(wet_flatlands, 8, plotTitle)
 ##############################################################################################################
 #STEP 6: 
 #ALL NATURAL FUELBEDS IN MESIC FLATLANDS.
-dev.off()
 
 #Subset all natural fuelbeds in mesic flatlands
 plotTitle <- "Mesic Flatlands -- Natural Fuelbeds"
@@ -542,7 +541,6 @@ x1plot(mesic_flatlands, 8, plotTitle)
 ##############################################################################################################
 #STEP 7: 
 #ALL NATURAL FUELBEDS IN MESIC UPLANDS.
-dev.off()
 
 #Subset all natural fuelbeds in mesic uplands
 plotTitle <- "Mesic Uplands -- Natural Fuelbeds"
@@ -573,7 +571,6 @@ x1plot(xeric_uplands, 8, plotTitle)
 ##############################################################################################################
 #STEP 9: 
 #ALL PLANTATION FUELBEDS IN ALL TOPOGRAPHIC POSITIONS
-dev.off()
 
 #Object to handle title names
 plotTitle <- c("Wet Flatlands", 
@@ -597,7 +594,6 @@ x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 8, plotTitl
 ##############################################################################################################
 #STEP 10: 
 #ALL RESTORATION FUELBEDS IN ALL NATURAL FUELBEDS FOR ALL TOPOGRAPHIC POSITIONS.
-dev.off()
 
 #Object to handle title names
 plotTitle <- c("Mesic Uplands", 
@@ -621,7 +617,6 @@ x2plot(mesic_uplands, xeric_uplands, 8, plotTitle)
 ##############################################################################################################
 #STEP 11: 
 #ALL RESTORATION FUELBEDS IN ALL PLANTATION FOR ALL TOPOGRAPHIC POSITIONS.
-dev.off()
 
 #Object to handle title names
 plotTitle <- c("Mesic Uplands", 
@@ -776,8 +771,7 @@ plotTitle <- "Wet Flatlands -- Natural Fuelbeds"
 wet_flatlands <- pig.df_v1[pig.df_v1$topo == 1 & pig.df_v1$treatment == 1,]
 
 #Compare version 1 of expected PIGs (colored) with casually determined PIGs (clear)
-dev.off()
-x1_comparison(wet_flatlands, 8, 9, plotTitle)
+x1_comparison(wet_flatlands, 8, 9, plotTitle, 0, 1)
 
 #This output is much better than the first iteration (step 5).
 #As in step 5, there is the expected declining PIG as mfri lengthens, but the PIGs are much lower, especially
@@ -794,8 +788,7 @@ x1_comparison(wet_flatlands, 8, 9, plotTitle)
 plotTitle <- "Mesic Flatlands -- Natural Fuelbeds"
 mesic_flatlands <- pig.df_v1[pig.df_v1$topo == 2 & pig.df_v1$treatment == 1,]
 
-dev.off()
-x1_comparison(mesic_flatlands, 8, 9, plotTitle)
+x1_comparison(mesic_flatlands, 8, 9, plotTitle, 0, 1)
 
 #This output is much better than the first iteration (step 6).
 #As in step 6, there is the expected declining PIG as mfri lengthens, but the PIGs are much lower, especially
@@ -812,8 +805,7 @@ x1_comparison(mesic_flatlands, 8, 9, plotTitle)
 plotTitle <- "Mesic Uplands -- Natural Fuelbeds"
 mesic_uplands <- pig.df_v1[pig.df_v1$topo == 3 & pig.df_v1$treatment == 1,]
 
-dev.off()
-x1_comparison(mesic_uplands, 8, 9, plotTitle)
+x1_comparison(mesic_uplands, 8, 9, plotTitle, 0, 1)
 
 #This output is much better than the first iteration (step 7).
 #As in step 7, there is the expected declining PIG as mfri lengthens, but the PIGs are lower, especially
@@ -830,8 +822,7 @@ x1_comparison(mesic_uplands, 8, 9, plotTitle)
 plotTitle <- "Xeric Uplands -- Natural Fuelbeds"
 xeric_uplands <- pig.df_v1[pig.df_v1$topo == 4 & pig.df_v1$treatment == 1,]
 
-dev.off()
-x1_comparison(xeric_uplands, 8, 9, plotTitle)
+x1_comparison(xeric_uplands, 8, 9, plotTitle, 0, 1)
 
 #This output is much better than the first iteration (step 8).
 #As in step 8, there is the expected declining PIG as mfri lengthens, but the PIGs are lower, especially
@@ -855,14 +846,10 @@ mesic_uplands <- pig.df_v1[pig.df_v1$topo == 3 & pig.df_v1$treatment == 5,]
 xeric_uplands <- pig.df_v1[pig.df_v1$topo == 4 & pig.df_v1$treatment == 5,]
 
 #ALL PLANTATION FUELBEDS IN ALL TOPOGRAPHIC POSITIONS
-dev.off()
-x1_comparison(wet_flatlands, 8, 9, plotTitle[1])
-dev.off()
-x1_comparison(mesic_flatlands, 8, 9, plotTitle[2])
-dev.off()
-x1_comparison(xeric_uplands, 8, 9, plotTitle[3])
-dev.off()
-x1_comparison(xeric_uplands, 8, 9, plotTitle[4])
+x1_comparison(wet_flatlands, 8, 9, plotTitle[1], 0, 1)
+x1_comparison(mesic_flatlands, 8, 9, plotTitle[2], 0, 1)
+x1_comparison(xeric_uplands, 8, 9, plotTitle[3], 0, 1)
+x1_comparison(xeric_uplands, 8, 9, plotTitle[4], 0, 1)
 
 
 #This output is much better than the first iteration (step 9).
@@ -884,10 +871,8 @@ plotTitle <- c("Mesic Uplands -- Restoration",
 mesic_uplands <- pig.df_v1[pig.df_v1$topo == 3 & pig.df_v1$treatment %in% c(2,3,4),]
 xeric_uplands <- pig.df_v1[pig.df_v1$topo == 4 & pig.df_v1$treatment %in% c(2,3,4),]
 
-dev.off()
-x1_comparison(xeric_uplands, 8, 9, plotTitle[1])
-dev.off()
-x1_comparison(xeric_uplands, 8, 9, plotTitle[2])
+x1_comparison(xeric_uplands, 8, 9, plotTitle[1], 0, 1)
+x1_comparison(xeric_uplands, 8, 9, plotTitle[2], 0, 1)
 
 #This output is much better than the step 10. 
 #1) PIGs for sand pine removal fuelbeds are much closer to zero whereas in the casually
@@ -908,10 +893,8 @@ plotTitle <- c("Mesic Uplands -- Plantations with Restoration",
 mesic_uplands <- pig.df_v1[pig.df_v1$topo == 3 & pig.df_v1$treatment %in% c(6,7,8),]
 xeric_uplands <- pig.df_v1[pig.df_v1$topo == 4 & pig.df_v1$treatment %in% c(6,7,8),]
 
-dev.off()
-x1_comparison(xeric_uplands, 8, 9, plotTitle[1])
-dev.off()
-x1_comparison(xeric_uplands, 8, 9, plotTitle[2])
+x1_comparison(xeric_uplands, 8, 9, plotTitle[1], 0, 1)
+x1_comparison(xeric_uplands, 8, 9, plotTitle[2], 0, 1)
 
 #This output is much better than the step 10. 
 #1) PIGs for sand pine removal fuelbeds are much closer to zero whereas in the casually
@@ -1067,8 +1050,8 @@ plotTitle <- "Wet Flatlands -- Natural Fuelbeds"
 wet_flatlands <- pig.df_v2[pig.df_v2$topo == 1 & pig.df_v2$treatment == 1,]
 
 #Compare version 1 of expected PIGs (colored) with casually determined PIGs (clear)
-x1_comparison(wet_flatlands, 8, 10, plotTitle)
-x1_comparison(wet_flatlands, 9, 10, plotTitle)
+x1_comparison(wet_flatlands, 8, 10, plotTitle, 0, 1)
+x1_comparison(wet_flatlands, 9, 10, plotTitle, 0, 1)
 
 #Same as version 1. This was expected. Version 2 was created to address issues with upland fuelbeds.
 
@@ -1081,8 +1064,8 @@ x1_comparison(wet_flatlands, 9, 10, plotTitle)
 plotTitle <- "Mesic Flatlands -- Natural Fuelbeds"
 mesic_flatlands <- pig.df_v2[pig.df_v2$topo == 2 & pig.df_v2$treatment == 1,]
 
-x1_comparison(mesic_flatlands, 8, 10, plotTitle)
-x1_comparison(mesic_flatlands, 9, 10, plotTitle)
+x1_comparison(mesic_flatlands, 8, 10, plotTitle, 0, 1)
+x1_comparison(mesic_flatlands, 9, 10, plotTitle, 0, 1)
 
 #Same as version 1. This was expected. Version 2 was created to address issues with upland fuelbeds.
 
@@ -1095,8 +1078,8 @@ x1_comparison(mesic_flatlands, 9, 10, plotTitle)
 plotTitle <- "Mesic Uplands -- Natural Fuelbeds"
 mesic_uplands <- pig.df_v2[pig.df_v2$topo == 3 & pig.df_v2$treatment == 1,]
 
-x1_comparison(mesic_uplands, 8, 10, plotTitle)
-x1_comparison(mesic_uplands, 9, 10, plotTitle)
+x1_comparison(mesic_uplands, 8, 10, plotTitle, 0, 1)
+x1_comparison(mesic_uplands, 9, 10, plotTitle, 0, 1)
 
 #Great, converting the switch had th desired effect on sand pine and oak/pine mixes. These fuelbeds
 #now have a marginal PIG in middle stages of stand succession (peaks at 20-40 years old).
@@ -1110,8 +1093,8 @@ x1_comparison(mesic_uplands, 9, 10, plotTitle)
 plotTitle <- "Xeric Uplands -- Natural Fuelbeds"
 xeric_uplands <- pig.df_v2[pig.df_v2$topo == 4 & pig.df_v2$treatment == 1,]
 
-x1_comparison(xeric_uplands, 8, 10, plotTitle)
-x1_comparison(xeric_uplands, 9, 10, plotTitle)
+x1_comparison(xeric_uplands, 8, 10, plotTitle, 0, 1)
+x1_comparison(xeric_uplands, 9, 10, plotTitle, 0, 1)
 
 #Great, converting the switch had th desired effect on sand pine and oak/pine mixes. These fuelbeds
 #now have a marginal PIG in middle stages of stand succession (peaks at 20-40 years old).
@@ -1132,14 +1115,14 @@ mesic_uplands <- pig.df_v2[pig.df_v2$topo == 3 & pig.df_v2$treatment == 5,]
 xeric_uplands <- pig.df_v2[pig.df_v2$topo == 4 & pig.df_v2$treatment == 5,]
 
 #ALL PLANTATION FUELBEDS IN ALL TOPOGRAPHIC POSITIONS
-x1_comparison(wet_flatlands, 8, 10, plotTitle[1])
-x1_comparison(wet_flatlands, 9, 10, plotTitle[1])
-x1_comparison(mesic_flatlands, 8, 10, plotTitle[2])
-x1_comparison(mesic_flatlands, 9, 10, plotTitle[2])
-x1_comparison(xeric_uplands, 8, 10, plotTitle[3])
-x1_comparison(xeric_uplands, 9, 10, plotTitle[3])
-x1_comparison(xeric_uplands, 8, 10, plotTitle[4])
-x1_comparison(xeric_uplands, 9, 10, plotTitle[4])
+x1_comparison(wet_flatlands, 8, 10, plotTitle[1], 0, 1)
+x1_comparison(wet_flatlands, 9, 10, plotTitle[1], 0, 1)
+x1_comparison(mesic_flatlands, 8, 10, plotTitle[2], 0, 1)
+x1_comparison(mesic_flatlands, 9, 10, plotTitle[2], 0, 1)
+x1_comparison(xeric_uplands, 8, 10, plotTitle[3], 0, 1)
+x1_comparison(xeric_uplands, 9, 10, plotTitle[3], 0, 1)
+x1_comparison(xeric_uplands, 8, 10, plotTitle[4], 0, 1)
+x1_comparison(xeric_uplands, 9, 10, plotTitle[4], 0, 1)
 
 #Great, converting the switch had th desired effect on sand pine and oak/pine mixes. These fuelbeds
 #now have a marginal PIG in middle stages of stand succession (peaks at 20-40 years old).
@@ -1158,10 +1141,10 @@ aa <- 4
 mesic_uplands <- pig.df_v2[pig.df_v2$topo == 3 & pig.df_v2$treatment == aa,]
 xeric_uplands <- pig.df_v2[pig.df_v2$topo == 4 & pig.df_v2$treatment == aa,]
 
-x1_comparison(xeric_uplands, 8, 10, plotTitle[1])
-x1_comparison(xeric_uplands, 9, 10, plotTitle[1])
-x1_comparison(xeric_uplands, 8, 10, plotTitle[2])
-x1_comparison(xeric_uplands, 9, 10, plotTitle[2])
+x1_comparison(xeric_uplands, 8, 10, plotTitle[1], 0, 1)
+x1_comparison(xeric_uplands, 9, 10, plotTitle[1], 0, 1)
+x1_comparison(xeric_uplands, 8, 10, plotTitle[2], 0, 1)
+x1_comparison(xeric_uplands, 9, 10, plotTitle[2], 0, 1)
 
 #Good, this was unexpected, but version 2 evens out the difference in PIGs between 
 #longleaf pine and oak/pine mix overstory types.
@@ -1178,10 +1161,10 @@ plotTitle <- c("Mesic Uplands -- Plantations with Restoration",
 mesic_uplands <- pig.df_v2[pig.df_v2$topo == 3 & pig.df_v2$treatment %in% c(6,7,8),]
 xeric_uplands <- pig.df_v2[pig.df_v2$topo == 4 & pig.df_v2$treatment %in% c(6,7,8),]
 
-x1_comparison(xeric_uplands, 8, 10, plotTitle[1])
-x1_comparison(xeric_uplands, 9, 10, plotTitle[1])
-x1_comparison(xeric_uplands, 8, 10, plotTitle[2])
-x1_comparison(xeric_uplands, 9, 10, plotTitle[2])
+x1_comparison(xeric_uplands, 8, 10, plotTitle[1], 0, 1)
+x1_comparison(xeric_uplands, 9, 10, plotTitle[1], 0, 1)
+x1_comparison(xeric_uplands, 8, 10, plotTitle[2], 0, 1)
+x1_comparison(xeric_uplands, 9, 10, plotTitle[2], 0, 1)
 
 #No change
 
@@ -1224,11 +1207,11 @@ x1_comparison(xeric_uplands, 9, 10, plotTitle[2])
 
 
 
-#SECTION 1
-#TEST 3
-#EVALUATE THE PROBABILITY OF IGNITION VALUES FOR FDM/STM FUELBEDS THAT WERE DETERMINED SYSTEMATICALLY
-#USING PIG COEFFICIENTS VERSION 2
-#s1t3
+#SECTION 2
+#TEST 1
+#USE SYSTEMATICALLY DETERMINED PIGS TO TEST ACCURACY OF ROS-DERIVED PIGS USING BENCHMARK FUEL MOISTURE
+#SCENARIO FOR ALL FUELBEDS
+#s2t1
 
 
 
@@ -1273,7 +1256,15 @@ x1_comparison(xeric_uplands, 9, 10, plotTitle[2])
 ##############################################################################################################
 ##############################################################################################################
 
+#############################################################################################################
+##############################################################################################################
+#STEP 28: 
+#CREATE DATA FRAME FOR BENCHMARK FUEL MOISTURE SCENARIO PIGS
 
+#Calculate PIGs from Benchmark Fuel Moisture Scenario ROS predictions
+#Use feature scaling to scale all values from 0 to 1.
+benchmark_pig <- (round((fbsb$benchmark_ros - min(fbsb$benchmark_ros)), 4))/
+  (round((max(fbsb$benchmark_ros) - min(fbsb$benchmark_ros)), 4))
 
 #Create a data frame that can be used for analysis.
 benchmark.df <- data.frame(fuelbed = fbsb$fuelbed, 
@@ -1283,228 +1274,26 @@ benchmark.df <- data.frame(fuelbed = fbsb$fuelbed,
                            treatment = fcc[,4], 
                            mfri = fcc[,5], 
                            age = fcc[,7], 
-                           expected_pig = fbsb$probability_of_ignition, 
+                           expected_pig = pig.df_v2$expected_pigv2, 
                            benchmark_ros = fbsb$benchmark_ros, 
                            benchmark_pig = benchmark_pig, 
-                           benchmark_dif = benchmark_pig - fbsb$probability_of_ignition)
-
-#STEP 22: 
-#SELECTED NATURAL FUELS FOR NATURAL FUELBEDS ACROSS ALL TOPOGRAPHIC POSITIONS.
-
-#Subset selected natural fuelbeds by topographic position.
-#Wet Flatlands
-plotTitle <- c("Wet Flatlands", 
-               "Mesic Flatlands", 
-               "Mesic Uplands", 
-               "Xeric Uplands")
-wet_flatlands <- pig.df_v1[pig.df_v1$fuelbed %in% c(1011101:1011106, 
-                                          1011201:1011206, 
-                                          1011301:1011306, 
-                                          1031401:1031406),]
-wet_flatlands <- wet_flatlands[order(wet_flatlands$fuelbed),]
-
-#Mesic Flatlands
-mesic_flatlands <- pig.df_v1[pig.df_v1$fuelbed %in% c(2011101:2011106, 
-                                            2011201:2011206, 
-                                            2011301:2011306, 
-                                            2031401:2031406),]
-mesic_flatlands <- mesic_flatlands[order(mesic_flatlands$fuelbed),]
-
-#Mesic Uplands
-mesic_uplands <- pig.df_v1[pig.df_v1$fuelbed %in% c(3011101:3011106, 
-                                          3011201:3011206, 
-                                          3011301:3011306, 
-                                          3031401:3031406),]
-mesic_uplands <- mesic_uplands[order(mesic_uplands$fuelbed),]
-
-#Xeric Uplands
-xeric_uplands <- pig.df_v1[pig.df_v1$fuelbed %in% c(4011101:4011106, 
-                                          4011201:4011206, 
-                                          4011301:4011306, 
-                                          4031401:4031406),]
-xeric_uplands <- xeric_uplands[order(xeric_uplands$fuelbed),]
-
-
-#ALL PLANTATION FUELBEDS IN ALL TOPOGRAPHIC POSITIONS
-dev.off()
-x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 11, plotTitle)
-
-#Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
-#expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
-#are higher than expected.
-
-#NEXT STEP, LOOK AT WIDER RANGE OF FUELBEDS IN EACH TOPOGRAPHIC POSITION; START WITH WET FLATLANDS
+                           benchmark_dif = benchmark_pig - pig.df_v2$expected_pigv2)
 
 ##############################################################################################################
 ##############################################################################################################
-#STEP 23: 
+#STEP 29: 
 #ALL NATURAL FUELBEDS IN WET FLATLANDS.
 
 #Subset all natural fuelbeds in wet flatlands fuelbeds.
 plotTitle <- c("Wet Flatlands -- Natural Fuelbeds")
-wet_flatlands <- benchmark.df_v2[benchmark.df_v2$topo == 1 & benchmark.df_v2$treatment == 1,]
+wet_flatlands <- benchmark.df[benchmark.df$topo == 1 & benchmark.df$treatment == 1,]
 
-dev.off()
-x1plot(wet_flatlands, 11, plotTitle)
+x1plot(wet_flatlands, 10, plotTitle)
 
-#Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
-#expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
-#are higher than expected. The only exception are titi swamps.
-
-#NEXT STEP, LOOK AT WIDER RANGE OF FUELBEDS IN MESIC FLATLANDS
-
-##############################################################################################################
-##############################################################################################################
-#STEP 24: 
-#ALL NATURAL FUELBEDS IN MESIC FLATLANDS.
-
-#Subset all natural fuelbeds for mesic flatlands
-plotTitle <- c("Mesic Flatlands -- Natural Fuelbeds")
-mesic_flatlands <- benchmark.df_v2[benchmark.df_v2$topo == 2 & benchmark.df_v2$treatment == 1,]
-
-dev.off()
-x1plot(mesic_flatlands, 11, plotTitle)
-
-#Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
-#expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
-#are higher than expected.
-
-#NEXT STEP, LOOK AT WIDER RANGE OF FUELBEDS IN MESIC UPLANDS
-
-##############################################################################################################
-##############################################################################################################
-#STEP 25: 
-#ALL NATURAL FUELBEDS IN MESIC UPLANDS.
-
-#Subset all natural fuelbeds for mesic uplands
-plotTitle <- c("Mesic Uplands -- Natural Fuelbeds")
-mesic_uplands <- benchmark.df_v2[benchmark.df_v2$topo == 3 & benchmark.df_v2$treatment == 1,]
-
-dev.off()
-x1plot(mesic_uplands, 11, plotTitle)
-
-#Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
-#expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
-#are higher than expected.
-
-#NEXT STEP, LOOK AT WIDER RANGE OF FUELBEDS IN XERIC UPLANDS
-
-##############################################################################################################
-##############################################################################################################
-#STEP 26: 
-#ALL NATURAL FUELBEDS IN XERIC UPLANDS.
-
-#Subset all natural fuelbeds for xeric uplands
-plotTitle <- c("Xeric Uplands -- Natural Fuelbeds")
-xeric_uplands <- benchmark.df_v2[benchmark.df_v2$topo == 4 & benchmark.df_v2$treatment == 1,]
-
-dev.off()
-x1plot(xeric_uplands, 11, plotTitle)
-
-#Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
-#expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
-#are higher than expected.
-
-#NEXT STEP, LOOK AT WIDER RANGE OF FUELBEDS IN  PLANTATIONS
-
-##############################################################################################################
-##############################################################################################################
-#STEP 27: 
-#ALL PLANTATION FUELBEDS IN ALL TOPOGRAPHIC POSITIONS
-
-#Subset all plantation fuelbeds by topographic position.
-plotTitle <- c("Wet Flatlands -- Plantations", 
-               "Mesic Flatlands -- Plantations", 
-               "Mesic Uplands -- Plantations", 
-               "Xeric Uplands -- Plantations")
-wet_flatlands <- benchmark.df_v2[benchmark.df_v2$topo == 1 & benchmark.df_v2$treatment == 5,]
-mesic_flatlands <- benchmark.df_v2[benchmark.df_v2$topo == 2 & benchmark.df_v2$treatment == 5,]
-mesic_uplands <- benchmark.df_v2[benchmark.df_v2$topo == 3 & benchmark.df_v2$treatment == 5,]
-xeric_uplands <- benchmark.df_v2[benchmark.df_v2$topo == 4 & benchmark.df_v2$treatment == 5,]
-
-#ALL PLANTATION FUELBEDS IN ALL TOPOGRAPHIC POSITIONS
-dev.off()
-x4plot(wet_flatlands, mesic_flatlands, mesic_uplands, xeric_uplands, 11, plotTitle)
-
-#Generally speaking those fuelbeds with low expected PIGs have FCCS-dervived PIGs that are higher than
-#expected (negative values) and those fuelbeds with high expected PIGs have FCCS-derived PIGs that
-#are higher than expected.
-
-#NEXT STEP, LOOK AT HOW PIGS CHANGE ACROSS RESTORATION TREATMENTS IN NATURAL FUELS
-
-##############################################################################################################
-##############################################################################################################
-#STEP 28: ALL RESTORATION FUELBEDS IN ALL NATURAL FUELBEDS FOR ALL TOPOGRAPHIC POSITIONS.
-#Evaluate the degree to which probability of ignition derived from FCCS rate of spread predictions
-#correlates with probability of ignition derived from Eglin staff meetings.
-
-#Subset restoration fuelbeds derived from natural fuels
-#Note ----- there are no restoration fuelbeds in wet or mesic flatlands
-plotTitle <- c("Mesic Uplands -- Restoration/Natural", 
-               "Xeric Uplands -- Restoration/Natural")
-mesic_uplands <- benchmark.df_v2[benchmark.df_v2$topo == 3 & benchmark.df_v2$treatment %in% c(2,3,4),]
-xeric_uplands <- benchmark.df_v2[benchmark.df_v2$topo == 4 & benchmark.df_v2$treatment %in% c(2,3,4),]
-
-dev.off()
-x2plot(mesic_uplands, xeric_uplands, 11, plotTitle)
-
-#This output is much better than the first iteration (step 9).
-#As in step 9, there is the expected declining PIG as mfri lengthens, but there is also
-#the expected low PIG in young stands.
-
-#Trends are not quite as expected in step 10 (first iteration)
-#1) Post-thinning should have low PIGs >> they are too high
-#2) Post-herbicide should have PIGs near zero >> this is the case.
-#3) Herbicide recovery should have high PIGs >> this is the case.
-
-#Systematic PIG Improvements
-#1) Post-thinning PIGs are now very low. As expected.
-#2) No change. these were fine in the first iteration.
-#3) No change. these were fine in the first iteration.
-
-#Although not a major driver (restoration treatment is), trends for mFRI and stand age are 
-#improved over the first iteration.
-
-#NEXT STEP, LOOK AT HOW PIGS CHANGE ACROSS RESTORATION TREATMENTS IN PLANTATION FUELS
-
-#############################################################################################################
-##############################################################################################################
-#STEP 29: 
-#ALL RESTORATION FUELBEDS IN ALL PLANTATION FOR ALL TOPOGRAPHIC POSITIONS.
-
-#Subset restoration fuelbeds derived from plantations
-#Note ----- there are no restoration fuelbeds in wet or mesic flatlands
-plotTitle <- c("Mesic Uplands -- Restoration/Plantations", 
-               "Xeric Uplands -- Restoration/Plantations")
-mesic_uplands <- benchmark.df_v2[benchmark.df_v2$topo == 3 & benchmark.df_v2$treatment %in% c(6,7,8),]
-xeric_uplands <- benchmark.df_v2[benchmark.df_v2$topo == 4 & benchmark.df_v2$treatment %in% c(6,7,8),]
-
-dev.off()
-x2plot(mesic_uplands, xeric_uplands, 11, plotTitle)
-
-#This output is much better than the first iteration (step 9).
-#As in step 9, there is the expected declining PIG as mfri lengthens, but there is also
-#the expected low PIG in young stands.
-
-#Trends are not quite as expected in step 10 (first iteration)
-#1) Post-thinning should have low PIGs >> they are too high
-#2) Post-herbicide should have PIGs near zero >> this is the case.
-#3) Herbicide recovery should have high PIGs >> this is the case.
-
-#Systematic PIG Improvements
-#1) Post-thinning PIGs are now very low. As expected.
-#2) No change. these were fine in the first iteration.
-#3) No change. these were fine in the first iteration.
-
-#Although not a major driver (restoration treatment is), trends for mFRI and stand age are 
-#improved over the first iteration.
-
-############
-#Start here
-#1) Redo systematic PIG calcs so max is one -- currently they can multiply to > 1
-#2) Fix salt march PIG in fccs-derived values
-#3) Use deviation from expected values to identify patterns in fccs-derived values that
-#   are largest.
+#This brings up a problem. The PIGs for all fuelbeds in wet flatlands are much lower than expected
+#because the FCCS fuelbed for salt marshes has a predicted ROS that is much higher than other fuelbeds
+#in this topographic position. Check to see how many other fuelbeds have a high predicted ROS.
+barplot(sort(fbsb$benchmark_ros))
 
 #############################################################################################################
 ##############################################################################################################
@@ -1512,7 +1301,7 @@ x2plot(mesic_uplands, xeric_uplands, 11, plotTitle)
 #QUANTIFY THE DEGREE OF CORRESPONDANCE BETWEEN FCCS/PREDICTED ROS-DERIVED PIGS AND EXPECTED PIGS.
 #THIS WILL BE THE BASIS FOR EVALUATING ALL FUTURE FCCS/PREDICTED ROS-DERIVED PIGS
 #figure 1
-plot(benchmark.df_v2$expected_pig, benchmark.df_v2$benchmark_pig)
+plot(benchmark.df$expected_pig, benchmark.df$benchmark_pig)
 
 #Show the linear model. 
 #If FCCS/Predicted ROS-derived PIGS lined up perfectly with expected values the model parameters
@@ -1526,7 +1315,7 @@ plot(benchmark.df_v2$expected_pig, benchmark.df_v2$benchmark_pig)
 #with the initial system of using Benchmark fuel moistures for all FCCS fuelbed runs to derive
 #PIGS because fine fuels in a swamp will have much wetter fuels than fine fuels in an upland 
 #stand of longleaf pine under weather conditions suitable for prescribed burninng.
-benchmark.lm <- lm(benchmark.df_v2$benchmark_pig ~ benchmark.df_v2$expected_pig)
+benchmark.lm <- lm(benchmark.df$benchmark_pig ~ benchmark.df$expected_pig)
 summary(benchmark.lm)
 #Not even close
 
