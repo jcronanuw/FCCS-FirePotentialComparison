@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <FCCS_file xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cash.xsd" schemaVersion="1.4">
 	<fuelbed_number>41315</fuelbed_number>
-	<fuelbed_name>Xeric upland 21-40 yr old long-needle pine plantation, 9-20 yr mFRI</fuelbed_name>
-	<fuelbed_description>Xeric uplands with 21-40 year old plantation-grown long-needle pine overstory and 9-20 year mFRI</fuelbed_description>
+	<fuelbed_name>Xeric upland 61-100 yr old long-needle pine with herbicide (early stage), 1-3 yr mFRI</fuelbed_name>
+	<fuelbed_description>Xeric uplands with 61-100 year old long-needle pine overstory with herbicide (early stage) and 1-3 year mFRI</fuelbed_description>
 	<ecoregion>230</ecoregion>
 	<vegetation_form>4</vegetation_form>
 	<structural_class>2</structural_class>
