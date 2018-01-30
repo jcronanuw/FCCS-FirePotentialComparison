@@ -3273,48 +3273,75 @@ ms
 
 ##############################################################################################################
 ##############################################################################################################
-#STEP 78: CALCULATE DIFFERENCE BETWEEN MS3 AND ms4 PIGS
+#STEP 87: CALCULATE DIFFERENCE BETWEEN MS3 AND ms4 PIGS
 
-str(fbsb)
-
-#Break fuelbeds into component parts and create a dataframe that will be source for visualizations.
+#Break Anne's fuelbeds into component parts and create a dataframe.
 aa_fca <- as.character(fbsb$andreu_fuelbed_no)
 aa_fcb <- strsplit(aa_fca, "")
 aa_fcc <- matrix(as.numeric(unlist(aa_fcb)), nrow = length(aa_fcb), ncol = length(aa_fcb[[1]]), byrow = T)
 
-#Show all fuelbeds 
+#Look at fuelbeds in xeric uplands where a single fire regime in Anne's fuelbeds is used
+#to represent fuelbeds of different fire regimes in the FDM model. This is the source of
+#the poor relationship between expected and predicted PIGs in test 7, mainly for the
+#restoration fuelbeds.
 fbsb[,c(1,4)][(fcc[,5] - aa_fcc[,5]) != 0 & fcc[,4] == 4,]
 
+#I used this list to create new FCCS fuelbeds. I only changed the names, not parameters.
+#This way the correct fuel moisture scenarios can be assigned to each fuelbed.
+
+#RELEAD FUELBED SYNCHRONICITY TABLE BECAUSE YOU HAVE NEW FUELBEDS
+#Load crosswalk between FCCS, Graphical STM, and FDM/STM fuelbeds
+fbsa_t8 <- read.table("inputs/fuelbed_synchronicty_test8.csv", 
+                   header=TRUE, sep=",", na.strings="NA", dec=".", strip.white=TRUE)
+
+#Recode the $andreu_fuelbed_no integers so they are the same length as the FDM/STM fuelbeds.
+#First convert integers to characters
+fbra_t8 <- as.character(fbsa_t8$andreu_fuelbed_no)
+
+#Second, recode fuelbeds to remove zeros at the 2 and 6 positions. This reduces the FCCS Fuelbed
+#numbers from 7 to 5 digit integers
+fbrb_t8 <- sapply(fbra_t8, recode)
+
+#Third replace 7-digit integers with recoded 5-digit integers.
+#warning -- N/As will be generated for dummy STM fuelbeds
+fbsa_t8$andreu_fuelbed_no <- fbrb_t8
+
+#Compare fuelbeds from your synchroncity table with the most recent copy from the FDM repository.
+#This ensures you are not working with a dated copy.
+all.equal(fbsa_t8$fuelbed, lut$fuelbed)
+
+#Remove dummy fuelbeds
+fbsb_t8 <- fbsa_t8[!is.na(fbsa_t8$andreu_fuelbed_no) == T,]
 
 #Load initial FCCS fire behavior predictions.
-#Fuel Moisture scenario -- 6
+#Fuel Moisture scenario -- 7
 #Transformations -- None
-ms6_ros <- read.table("inputs/fccs_ros_moistureScenario_6.csv", 
+ms7_ros <- read.table("inputs/fccs_ros_moistureScenario_7.csv", 
                       header=TRUE, sep=",", na.strings="NA", dec=".", strip.white=TRUE)
 
 #Condense this table to fuelbeds and rate of spread predictions
 #First recode the five digit fuelbed number to a seven digit number.
-ch.fb <- as.character(ms6_ros$Fuelbed_number)
+ch.fb <- as.character(ms7_ros$Fuelbed_number)
 ch.fb_re <- mapply(function(y) {recode(y)}, ch.fb)
 ch.fb_reNu <- as.numeric(ch.fb_re)
-ros <- data.frame(fuelbed = ch.fb_reNu, ms6_ros = ms6_ros$Custom_ROS)
+ros <- data.frame(fuelbed = ch.fb_reNu, ms7_ros = ms7_ros$Custom_ROS)
 
 #Merge Andreu's fuelbeds and model-derived ROS predictions into the complete list of Eglin Fuelbeds
-fbsm <- merge(fbsb, ros, by.x = "andreu_fuelbed_no", by.y = "fuelbed")
-fbsn <- fbsm[order(fbsm$fuelbed),]
+fbso <- merge(fbsb_t8, ros, by.x = "andreu_fuelbed_no", by.y = "fuelbed")
+fbsp <- fbso[order(fbso$fuelbed),]
 
 #Before you apply the max Moisture Scenario 3 ROS to determine PIGs look at their distribution. 
-barplot(fbsn$ms6_ros)
+barplot(fbsp$ms7_ros)
 
 #Use feature scaling to onvert moisture scenario 1 predicted ROS into probability of ignition (PIG)
 #values for each fuelbed.
 #Change from test 5. Use 90th percentile predicted ROS, rather than max(predicted ros).
-ms6_pig <- round(((fbsn$ms6_ros - min(fbsn$ms6_ros))/
-                    ((fbsn$ms6_ros[round((length(fbsn[,1]) * 0.9),0)]) - min(fbsn$ms6_ros))), 4)
-ms6_pig[ms6_pig > 1] <- 1
+ms7_pig <- round(((fbsp$ms7_ros - min(fbsp$ms7_ros))/
+                    ((fbsp$ms7_ros[round((length(fbsp[,1]) * 0.9),0)]) - min(fbsp$ms7_ros))), 4)
+ms7_pig[ms7_pig > 1] <- 1
 
 #Create a data frame with data through fuel moisture scenario 3.
-ms6.df <- data.frame(fuelbed = fbsn$fuelbed, 
+ms7.df <- data.frame(fuelbed = fbsn$fuelbed, 
                      andreu_fuelbed_no = fbsn$andreu_fuelbed_no, 
                      topo = fcc[,1], 
                      cover = fcc[,3], 
@@ -3342,7 +3369,10 @@ ms6.df <- data.frame(fuelbed = fbsn$fuelbed,
                      ms5_dif = ms5_pig - expected_pigs_v2, 
                      ms6_ros = fbsn$ms6_ros, 
                      ms6_pig = ms6_pig, 
-                     ms6_dif = ms6_pig - expected_pigs_v2)
+                     ms6_dif = ms6_pig - expected_pigs_v2, 
+                     ms7_ros = fbsp$ms7_ros, 
+                     ms7_pig = ms7_pig, 
+                     ms7_dif = ms7_pig - expected_pigs_v2)
 
 
 #END---------------------------------------------------------------------------------------
