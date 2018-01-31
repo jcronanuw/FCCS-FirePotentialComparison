@@ -3319,12 +3319,24 @@ fbsb_t8 <- fbsa_t8[!is.na(fbsa_t8$andreu_fuelbed_no) == T,]
 ms7_ros <- read.table("inputs/fccs_ros_moistureScenario_7.csv", 
                       header=TRUE, sep=",", na.strings="NA", dec=".", strip.white=TRUE)
 
+#Check for any duplicate fuelbeds in fuel moisture scenario 7 FCCS Outputs
+#length(sort(unique(ms7_ros$Fuelbed_number)))
+#duplicated(ms7_ros$Fuelbed_number)
+#Vector output should contain all FALSE elements.
+
 #Condense this table to fuelbeds and rate of spread predictions
 #First recode the five digit fuelbed number to a seven digit number.
 ch.fb <- as.character(ms7_ros$Fuelbed_number)
 ch.fb_re <- mapply(function(y) {recode(y)}, ch.fb)
 ch.fb_reNu <- as.numeric(ch.fb_re)
 ros <- data.frame(fuelbed = ch.fb_reNu, ms7_ros = ms7_ros$Custom_ROS)
+
+#Check to make sure there are no fuelbeds in the fuelbed synchronicity table that don't match with 
+#fuelbeds in FCCS output table
+#aa <- match(fbsb_t8$andreu_fuelbed_no, ros$fuelbed)
+#bb <- cbind(fbsb_t8$andreu_fuelbed_no, aa)
+#bb[is.na(bb[,2] == T)]
+#Output should be "numeric(0)" i.e., not unmatched fuelbeds.
 
 #Merge Andreu's fuelbeds and model-derived ROS predictions into the complete list of Eglin Fuelbeds
 fbso <- merge(fbsb_t8, ros, by.x = "andreu_fuelbed_no", by.y = "fuelbed")
@@ -3374,5 +3386,170 @@ ms7.df <- data.frame(fuelbed = fbsn$fuelbed,
                      ms7_pig = ms7_pig, 
                      ms7_dif = ms7_pig - expected_pigs_v2)
 
+##############################################################################################################
+##############################################################################################################
+#STEP 88: 
+#COMPARE WET FLATLANDS -- NATURAL FUELBEDS
 
+#Subset all natural fuelbeds in wet flatlands fuelbeds.
+plotTitle <- c("Wet Flatlands -- Natural Fuelbeds")
+wet_flatlands <- ms7.df[ms7.df$topo == 1 & ms7.df$treatment == 1,]
+
+x1_comparison(wet_flatlands, 8, 31, plotTitle, 0, 1)
+x1_comparison(wet_flatlands, 25, 28, plotTitle, 0, 1)
+
+#PIGs for older stand ages are slightly lower across the board
+
+##############################################################################################################
+##############################################################################################################
+#STEP 80: 
+#ALL NATURAL FUELBEDS IN MESIC FLATLANDS.
+
+#Subset all natural fuelbeds for mesic flatlands
+plotTitle <- c("Mesic Flatlands -- Natural Fuelbeds")
+mesic_flatlands <- ms7.df[ms7.df$topo == 2 & ms7.df$treatment == 1,]
+
+x1_comparison(mesic_flatlands, 8, 31, plotTitle, 0, 1)
+x1_comparison(mesic_flatlands, 25, 28, plotTitle, 0, 1)
+
+#PIGs for older stand ages are slightly lower across the board
+
+##############################################################################################################
+##############################################################################################################
+#STEP 81: 
+#ALL NATURAL FUELBEDS IN MESIC UPLANDS.
+
+#Subset all natural fuelbeds for mesic uplands
+plotTitle <- c("Mesic Uplands -- Natural Fuelbeds")
+mesic_uplands <- ms7.df[ms7.df$topo == 3 & ms7.df$treatment == 1,]
+
+x1_comparison(mesic_uplands, 8, 31, plotTitle, 0, 1)
+x1_comparison(mesic_uplands, 25, 28, plotTitle, 0, 1)
+
+#PIGs for 1-3 longleaf > 40 years old are slightly higher, but PIGs for other older longleaf are slightly
+#lower.
+
+##############################################################################################################
+##############################################################################################################
+#STEP 82: 
+#ALL NATURAL FUELBEDS IN XERIC UPLANDS.
+
+#Subset all natural fuelbeds for xeric uplands
+plotTitle <- c("Xeric Uplands -- Natural Fuelbeds")
+xeric_uplands <- ms7.df[ms7.df$topo == 4 & ms7.df$treatment == 1,]
+
+x1_comparison(xeric_uplands, 8, 31, plotTitle, 0, 1)
+x1_comparison(xeric_uplands, 25, 28, plotTitle, 0, 1)
+
+#PIGs for 1-3 longleaf > 40 years old are slightly higher, but PIGs for other older longleaf are slightly
+#lower.
+
+##############################################################################################################
+##############################################################################################################
+#STEP 83:
+#ALL PLANTATION FUELBEDS IN ALL TOPOGRAPHIC POSITIONS
+
+#Subset all plantation fuelbeds by topographic position.
+plotTitle <- c("Wet Flatlands -- Plantations", 
+               "Mesic Flatlands -- Plantations", 
+               "Mesic Uplands -- Plantations", 
+               "Xeric Uplands -- Plantations")
+wet_flatlands <- ms7.df[ms7.df$topo == 1 & ms7.df$treatment == 5,]
+mesic_flatlands <- ms7.df[ms7.df$topo == 2 & ms7.df$treatment == 5,]
+mesic_uplands <- ms7.df[ms7.df$topo == 3 & ms7.df$treatment == 5,]
+xeric_uplands <- ms7.df[ms7.df$topo == 4 & ms7.df$treatment == 5,]
+
+#ALL PLANTATION FUELBEDS IN ALL TOPOGRAPHIC POSITIONS
+x1_comparison(wet_flatlands, 8, 31, plotTitle[1], 0, 1)
+x1_comparison(wet_flatlands, 25, 28, plotTitle[1], 0, 1)
+x1_comparison(mesic_flatlands, 8, 31, plotTitle[2], 0, 1)
+x1_comparison(mesic_flatlands, 25, 28, plotTitle[2], 0, 1)
+x1_comparison(xeric_uplands, 8, 31, plotTitle[3], 0, 1)
+x1_comparison(xeric_uplands, 25, 28, plotTitle[3], 0, 1)
+x1_comparison(xeric_uplands, 8, 31, plotTitle[4], 0, 1)
+x1_comparison(xeric_uplands, 25, 28, plotTitle[4], 0, 1)
+
+#PIG trends are reflective of natural fuelbeds.
+
+##############################################################################################################
+##############################################################################################################
+#STEP 84: ALL POST-RESTORATION FUELBEDS IN ALL NATURAL FUELBEDS FOR ALL TOPOGRAPHIC POSITIONS.
+#Evaluate the degree to which probability of ignition derived from FCCS rate of spread predictions
+#correlates with probability of ignition derived from Eglin staff meetings.
+
+#Subset restoration fuelbeds derived from natural fuels
+#Note ----- there are no restoration fuelbeds in wet or mesic flatlands
+plotTitle <- c("Mesic Uplands -- Restoration", 
+               "Xeric Uplands -- Restoration")
+aa <- 4
+mesic_uplands <- ms7.df[ms7.df$topo == 3 & ms7.df$treatment == aa,]
+xeric_uplands <- ms7.df[ms7.df$topo == 4 & ms7.df$treatment == aa,]
+
+x1_comparison(mesic_uplands, 8, 31, plotTitle[1], 0, 1)
+x1_comparison(mesic_uplands, 19, 28, plotTitle[1], 0, 1)
+x1_comparison(xeric_uplands, 8, 31, plotTitle[2], 0, 1)
+x1_comparison(xeric_uplands, 19, 28, plotTitle[2], 0, 1)
+
+#In general PIGs are slightly lower.
+
+#############################################################################################################
+##############################################################################################################
+#STEP 85: 
+#ALL RESTORATION FUELBEDS IN ALL PLANTATION FOR ALL TOPOGRAPHIC POSITIONS.
+
+#Subset restoration fuelbeds derived from plantations
+#Note ----- there are no restoration fuelbeds in wet or mesic flatlands
+plotTitle <- c("Mesic Uplands -- Plantations with Restoration", 
+               "Xeric Uplands -- Plantations with Restoration")
+mesic_uplands <- ms7.df[ms7.df$topo == 3 & ms7.df$treatment %in% c(6,7,8),]
+xeric_uplands <- ms7.df[ms7.df$topo == 4 & ms7.df$treatment %in% c(6,7,8),]
+
+x1_comparison(mesic_uplands, 8, 31, plotTitle[1], 0, 1)
+x1_comparison(mesic_uplands, 25, 28, plotTitle[1], 0, 1)
+x1_comparison(xeric_uplands, 8, 31, plotTitle[2], 0, 1)
+x1_comparison(xeric_uplands, 25, 28, plotTitle[2], 0, 1)
+
+#In general PIGs are slightly lower.
+
+#############################################################################################################
+##############################################################################################################
+#STEP 86: 
+#QUANTIFY THE DEGREE OF CORRESPONDANCE BETWEEN FCCS/PREDICTED ROS-DERIVED PIGS AND EXPECTED PIGS.
+#THIS WILL BE THE BASIS FOR EVALUATING ALL FUTURE FCCS/PREDICTED ROS-DERIVED PIGS
+plot(ms7.df$expected_pig, ms7.df$ms7_pig)
+
+#Show the linear model. 
+#If FCCS/Predicted ROS-derived PIGS lined up perfectly with expected values the model parameters
+#would be:
+#Slope:       1
+#Intercept:   0
+#R-Squared:   1
+#p-value:     0
+#The goal here is not to fit the model-derived PIGs to expected pigs, but to use the expected PIGS
+#as a standard to judge improvements in the model-derived PIGS. We know there are major problems
+#with the initial system of using Benchmark fuel moistures for all FCCS fuelbed runs to derive
+#PIGS because fine fuels in a swamp will have much wetter fuels than fine fuels in an upland 
+#stand of longleaf pine under weather conditions suitable for prescribed burninng.
+ms7.lm <- lm(ms7.df$ms7_pig ~ ms7.df$expected_pig)
+summary(ms7.lm)
+plot(ms7.df$expected_pig, ms7.df$ms7_pig)
+abline(ms7.lm)
+#Not even close
+
+#Quantify deviation from expected PIGS
+plot(ms7.df$ms7_dif)
+
+#Populate data frame
+scenario <- 7
+ms$WetFlatlands_Nat[scenario] <- round(sum(abs(ms7.df$ms7_dif[ms7.df$topo == 1 & ms7.df$treatment == 1])),1)
+ms$MesicFlatlands_Nat[scenario] <- round(sum(abs(ms7.df$ms7_dif[ms7.df$topo == 2 & ms7.df$treatment == 1])),1)
+ms$MesicUplands_Nat[scenario] <- round(sum(abs(ms7.df$ms7_dif[ms7.df$topo == 3 & ms7.df$treatment == 1])),1)
+ms$XericUplands_Nat[scenario] <- round(sum(abs(ms7.df$ms7_dif[ms7.df$topo == 4 & ms7.df$treatment == 1])),1)
+ms$WetFlatlands_Other[scenario] <- round(sum(abs(ms7.df$ms7_dif[ms7.df$topo == 1 & ms7.df$treatment > 1])),1)
+ms$MesicFlatlands_Other[scenario] <- round(sum(abs(ms7.df$ms7_dif[ms7.df$topo == 2 & ms7.df$treatment > 1])),1)
+ms$MesicUplands_Other[scenario] <- round(sum(abs(ms7.df$ms7_dif[ms7.df$topo == 3 & ms7.df$treatment > 1])),1)
+ms$XericUplands_Other[scenario] <- round(sum(abs(ms7.df$ms7_dif[ms7.df$topo == 4 & ms7.df$treatment > 1])),1)
+ms$Total[scenario] <- round(sum(abs(ms7.df$ms7_dif)),1)
+
+ms
 #END---------------------------------------------------------------------------------------
