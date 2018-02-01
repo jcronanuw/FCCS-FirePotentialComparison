@@ -2679,16 +2679,23 @@ ros <- data.frame(fuelbed = ch.fb_reNu, ms5_ros = ms5_ros$Custom_ROS)
 
 #Merge Andreu's fuelbeds and model-derived ROS predictions into the complete list of Eglin Fuelbeds
 fbsk <- merge(fbsb, ros, by.x = "andreu_fuelbed_no", by.y = "fuelbed")
-fbsl <- fbsk[order(fbsk$fuelbed),]
+fbsl_v1 <- fbsk[order(fbsk$fuelbed),]
+
+#Order fbsl by rate of spread for moisture scenario 5
+fbsl_v2 <- fbsl_v1[order(fbsl_v1$ms5_ros),]
 
 #Before you apply the max Moisture Scenario 3 ROS to determine PIGs look at their distribution. 
-barplot(fbsl$ms5_ros)
+barplot(fbsl_v2$ms5_ros)
 
 #Use feature scaling to onvert moisture scenario 1 predicted ROS into probability of ignition (PIG)
 #values for each fuelbed.
 #Change from test 5. Use 90th percentile predicted ROS, rather than max(predicted ros).
-ms5_pig <- round(((fbsl$ms5_ros - min(fbsl$ms5_ros))/
-                    ((fbsl$ms5_ros[round((length(fbsl[,1]) * 0.9),0)]) - min(fbsl$ms5_ros))), 4)
+ms5_pig <- round(((fbsl_v2$ms5_ros - min(fbsl_v2$ms5_ros))/
+                    ((fbsl_v2$ms5_ros[round((length(fbsl_v2[,1]) * 0.9),0)]) - min(fbsl_v2$ms5_ros))), 4)
+
+#Add PIG value to fbsl data frame and re-roder by fuelbed
+fbsl_v3 <- data.frame(fbsl_v2, ms5_pig = ms5_pig)
+fbsl <- fbsl_v3[order(fbsl_v3$fuelbed),]
 
 #Create a data frame with data through fuel moisture scenario 3.
 ms5.df <- data.frame(fuelbed = fbsl$fuelbed, 
@@ -2715,8 +2722,8 @@ ms5.df <- data.frame(fuelbed = fbsl$fuelbed,
                      ms4_pig = ms4_pig, 
                      ms4_dif = ms4_pig - expected_pigs_v2, 
                      ms5_ros = fbsl$ms5_ros, 
-                     ms5_pig = ms5_pig, 
-                     ms5_dif = ms5_pig - expected_pigs_v2)
+                     ms5_pig = fbsl$ms5_pig, 
+                     ms5_dif = fbsl$ms5_pig - expected_pigs_v2)
 
 ##############################################################################################################
 ##############################################################################################################
@@ -2982,17 +2989,24 @@ ros <- data.frame(fuelbed = ch.fb_reNu, ms6_ros = ms6_ros$Custom_ROS)
 
 #Merge Andreu's fuelbeds and model-derived ROS predictions into the complete list of Eglin Fuelbeds
 fbsm <- merge(fbsb, ros, by.x = "andreu_fuelbed_no", by.y = "fuelbed")
-fbsn <- fbsm[order(fbsm$fuelbed),]
+fbsn_v1 <- fbsm[order(fbsm$fuelbed),]
+
+#Order fbsl by rate of spread for moisture scenario 5
+fbsn_v2 <- fbsn_v1[order(fbsn_v1$ms6_ros),]
 
 #Before you apply the max Moisture Scenario 3 ROS to determine PIGs look at their distribution. 
-barplot(fbsn$ms6_ros)
+barplot(fbsn_v2$ms6_ros)
 
 #Use feature scaling to onvert moisture scenario 1 predicted ROS into probability of ignition (PIG)
 #values for each fuelbed.
 #Change from test 5. Use 90th percentile predicted ROS, rather than max(predicted ros).
-ms6_pig <- round(((fbsn$ms6_ros - min(fbsn$ms6_ros))/
-                    ((fbsn$ms6_ros[round((length(fbsn[,1]) * 0.9),0)]) - min(fbsn$ms6_ros))), 4)
+ms6_pig <- round(((fbsn_v2$ms6_ros - min(fbsn_v2$ms6_ros))/
+                    ((fbsn_v2$ms6_ros[round((length(fbsn_v2[,1]) * 0.9),0)]) - min(fbsn_v2$ms6_ros))), 4)
 ms6_pig[ms6_pig > 1] <- 1
+
+#Add PIG value to fbsl data frame and re-roder by fuelbed
+fbsn_v3 <- data.frame(fbsn_v2, ms6_pig = ms6_pig)
+fbsn <- fbsn_v3[order(fbsn_v3$fuelbed),]
 
 #Create a data frame with data through fuel moisture scenario 3.
 ms6.df <- data.frame(fuelbed = fbsn$fuelbed, 
@@ -3022,8 +3036,8 @@ ms6.df <- data.frame(fuelbed = fbsn$fuelbed,
                      ms5_pig = ms5_pig, 
                      ms5_dif = ms5_pig - expected_pigs_v2, 
                      ms6_ros = fbsn$ms6_ros, 
-                     ms6_pig = ms6_pig, 
-                     ms6_dif = ms6_pig - expected_pigs_v2)
+                     ms6_pig = fbsn$ms6_pig, 
+                     ms6_dif = fbsn$ms6_pig - expected_pigs_v2)
 
 ##############################################################################################################
 ##############################################################################################################
@@ -3340,17 +3354,24 @@ ros <- data.frame(fuelbed = ch.fb_reNu, ms7_ros = ms7_ros$Custom_ROS)
 
 #Merge Andreu's fuelbeds and model-derived ROS predictions into the complete list of Eglin Fuelbeds
 fbso <- merge(fbsb_t8, ros, by.x = "andreu_fuelbed_no", by.y = "fuelbed")
-fbsp <- fbso[order(fbso$fuelbed),]
+fbsp_v1 <- fbso[order(fbso$fuelbed),]
+
+#Order fbsl by rate of spread for moisture scenario 5
+fbsp_v2 <- fbsp_v1[order(fbsp_v1$ms7_ros),]
 
 #Before you apply the max Moisture Scenario 3 ROS to determine PIGs look at their distribution. 
-barplot(fbsp$ms7_ros)
+barplot(fbsp_v2$ms7_ros)
 
 #Use feature scaling to onvert moisture scenario 1 predicted ROS into probability of ignition (PIG)
 #values for each fuelbed.
 #Change from test 5. Use 90th percentile predicted ROS, rather than max(predicted ros).
-ms7_pig <- round(((fbsp$ms7_ros - min(fbsp$ms7_ros))/
-                    ((fbsp$ms7_ros[round((length(fbsp[,1]) * 0.9),0)]) - min(fbsp$ms7_ros))), 4)
+ms7_pig <- round(((fbsp_v2$ms7_ros - min(fbsp_v2$ms7_ros))/
+                    ((fbsp_v2$ms7_ros[round((length(fbsp_v2[,1]) * 0.9),0)]) - min(fbsp_v2$ms7_ros))), 4)
 ms7_pig[ms7_pig > 1] <- 1
+
+#Add PIG value to fbsl data frame and re-roder by fuelbed
+fbsp_v3 <- data.frame(fbsp_v2, ms7_pig = ms7_pig)
+fbsp <- fbsp_v3[order(fbsp_v3$fuelbed),]
 
 #Create a data frame with data through fuel moisture scenario 3.
 ms7.df <- data.frame(fuelbed = fbsn$fuelbed, 
@@ -3383,8 +3404,8 @@ ms7.df <- data.frame(fuelbed = fbsn$fuelbed,
                      ms6_pig = ms6_pig, 
                      ms6_dif = ms6_pig - expected_pigs_v2, 
                      ms7_ros = fbsp$ms7_ros, 
-                     ms7_pig = ms7_pig, 
-                     ms7_dif = ms7_pig - expected_pigs_v2)
+                     ms7_pig = fbsp$ms7_pig, 
+                     ms7_dif = fbsp$ms7_pig - expected_pigs_v2)
 
 ##############################################################################################################
 ##############################################################################################################
@@ -3632,13 +3653,19 @@ ms
 ##############################################################################################################
 ##############################################################################################################
 
+#Order fbsl by rate of spread for moisture scenario 5
+fbsr_v1 <- fbsp[order(fbsp$ms7_ros),]
 
 #Use feature scaling to onvert moisture scenario 1 predicted ROS into probability of ignition (PIG)
 #values for each fuelbed.
 #Change from test 5. Use 90th percentile predicted ROS, rather than max(predicted ros).
-ms8_pig <- round(((fbsp$ms7_ros - min(fbsp$ms7_ros))/
-                    ((fbsp$ms7_ros[round((length(fbsp[,1]) * 0.8),0)]) - min(fbsp$ms7_ros))), 4)
+ms8_pig <- round(((fbsr_v1$ms7_ros - min(fbsr_v1$ms7_ros))/
+                    ((fbsr_v1$ms7_ros[round((length(fbsr_v1[,1]) * 0.975),0)]) - min(fbsr_v1$ms7_ros))), 4)
 ms8_pig[ms8_pig > 1] <- 1
+
+#Add PIG value to fbsl data frame and re-roder by fuelbed
+fbsr_v2 <- data.frame(fbsr_v1, ms8_pig = ms8_pig)
+fbsr <- fbsr_v2[order(fbsr_v2$fuelbed),]
 
 #Create a data frame with data through fuel moisture scenario 3.
 ms8.df <- data.frame(fuelbed = fbsn$fuelbed, 
@@ -3673,9 +3700,9 @@ ms8.df <- data.frame(fuelbed = fbsn$fuelbed,
                      ms7_ros = fbsp$ms7_ros, 
                      ms7_pig = ms7_pig, 
                      ms7_dif = ms7_pig - expected_pigs_v2, 
-                     ms8_ros = fbsp$ms7_ros, 
-                     ms8_pig = ms8_pig, 
-                     ms8_dif = ms8_pig - expected_pigs_v2)
+                     ms8_ros = fbsr$ms7_ros, 
+                     ms8_pig = fbsr$ms8_pig, 
+                     ms8_dif = fbsr$ms8_pig - expected_pigs_v2)
 
 ##############################################################################################################
 ##############################################################################################################
@@ -3831,7 +3858,7 @@ abline(ms8.lm)
 plot(ms8.df$ms8_dif)
 
 #Populate data frame
-scenario <- 8
+scenario <- 9
 ms$WetFlatlands_Nat[scenario] <- round(sum(abs(ms8.df$ms8_dif[ms8.df$topo == 1 & ms8.df$treatment == 1])),1)
 ms$MesicFlatlands_Nat[scenario] <- round(sum(abs(ms8.df$ms8_dif[ms8.df$topo == 2 & ms8.df$treatment == 1])),1)
 ms$MesicUplands_Nat[scenario] <- round(sum(abs(ms8.df$ms8_dif[ms8.df$topo == 3 & ms8.df$treatment == 1])),1)
